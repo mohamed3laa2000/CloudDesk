@@ -27,10 +27,22 @@
     scroll-behavior: smooth;
   }
 
-  /* Focus visible for accessibility */
+  /* Remove default browser outline */
+  *:focus {
+    outline: none;
+  }
+
+  /* Focus visible for accessibility (keyboard navigation only) */
   *:focus-visible {
     outline: 2px solid theme('colors.indigo.600');
     outline-offset: 2px;
+  }
+
+  /* Ensure buttons and links don't show outline on mouse click */
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible),
+  [role="button"]:focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
