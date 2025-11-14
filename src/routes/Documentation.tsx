@@ -1,3 +1,4 @@
+import React from 'react';
 import { Book, Code, Zap, Shield, HelpCircle, ExternalLink } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -224,78 +225,7 @@ export function Documentation() {
                 Connecting to Your Desktop
               </h2>
               
-              <Tabs
-                tabs={[
-                  { id: 'browser', label: 'Browser' },
-                  { id: 'rdp', label: 'RDP' },
-                  { id: 'vnc', label: 'VNC' },
-                ]}
-                defaultTab="browser"
-              >
-                {(activeTab) => (
-                  <div className="mt-6">
-                    {activeTab === 'browser' && (
-                      <div className="prose prose-gray max-w-none">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Browser-Based Connection (Recommended)
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          The easiest way to connect. No software installation required.
-                        </p>
-                        <ol className="list-decimal list-inside text-gray-600 space-y-2">
-                          <li>Click "Connect" on your desktop</li>
-                          <li>Click "Open in Browser"</li>
-                          <li>Your desktop will open in a new tab</li>
-                        </ol>
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                          <p className="text-sm text-blue-900">
-                            <strong>Tip:</strong> For best performance, use Chrome or Edge browser.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {activeTab === 'rdp' && (
-                      <div className="prose prose-gray max-w-none">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Remote Desktop Protocol (RDP)
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          For Windows users who prefer native Remote Desktop.
-                        </p>
-                        <ol className="list-decimal list-inside text-gray-600 space-y-2">
-                          <li>Click "Connect" on your desktop</li>
-                          <li>Click "Download RDP File"</li>
-                          <li>Open the downloaded .rdp file</li>
-                          <li>Enter your credentials when prompted</li>
-                        </ol>
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
-                          <p className="text-sm text-gray-900 font-medium mb-2">Windows:</p>
-                          <p className="text-sm text-gray-600">Built-in Remote Desktop Connection</p>
-                          <p className="text-sm text-gray-900 font-medium mb-2 mt-3">macOS:</p>
-                          <p className="text-sm text-gray-600">Download Microsoft Remote Desktop from App Store</p>
-                        </div>
-                      </div>
-                    )}
-                    {activeTab === 'vnc' && (
-                      <div className="prose prose-gray max-w-none">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          VNC Connection
-                        </h3>
-                        <p className="text-gray-600 mb-4">
-                          For users who prefer VNC clients.
-                        </p>
-                        <ol className="list-decimal list-inside text-gray-600 space-y-2">
-                          <li>Install a VNC client (RealVNC, TightVNC, etc.)</li>
-                          <li>Click "Connect" on your desktop</li>
-                          <li>Click "Copy VNC Address"</li>
-                          <li>Paste the address into your VNC client</li>
-                          <li>Enter your credentials when prompted</li>
-                        </ol>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Tabs>
+              <ConnectionTabs />
             </Card>
 
             <Card className="p-8">
@@ -368,6 +298,133 @@ export function Documentation() {
               Our support team is here to help you succeed
             </p>
           </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-6 text-center">
+              <Book className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Knowledge Base
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Browse our comprehensive guides and tutorials
+              </p>
+              <Button variant="ghost" className="mx-auto">
+                Browse articles
+              </Button>
+            </Card>
+
+            <Card className="p-6 text-center">
+              <HelpCircle className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Community Forum
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Get help from other CloudDesk users
+              </p>
+              <Button variant="ghost" className="mx-auto">
+                Visit forum
+              </Button>
+            </Card>
+
+            <Card className="p-6 text-center">
+              <ExternalLink className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Contact Support
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Reach out to our support team directly
+              </p>
+              <Button variant="ghost" className="mx-auto">
+                Contact us
+              </Button>
+            </Card>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// Connection Tabs Component
+function ConnectionTabs() {
+  const [activeTab, setActiveTab] = React.useState('browser');
+
+  return (
+    <>
+      <Tabs
+        items={[
+          { id: 'browser', label: 'Browser' },
+          { id: 'rdp', label: 'RDP' },
+          { id: 'vnc', label: 'VNC' },
+        ]}
+        activeId={activeTab}
+        onChange={setActiveTab}
+      />
+      
+      <div className="mt-6">
+        {activeTab === 'browser' && (
+                      <div className="prose prose-gray max-w-none">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Browser-Based Connection (Recommended)
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          The easiest way to connect. No software installation required.
+                        </p>
+                        <ol className="list-decimal list-inside text-gray-600 space-y-2">
+                          <li>Click "Connect" on your desktop</li>
+                          <li>Click "Open in Browser"</li>
+                          <li>Your desktop will open in a new tab</li>
+                        </ol>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                          <p className="text-sm text-blue-900">
+                            <strong>Tip:</strong> For best performance, use Chrome or Edge browser.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {activeTab === 'rdp' && (
+                      <div className="prose prose-gray max-w-none">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Remote Desktop Protocol (RDP)
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          For Windows users who prefer native Remote Desktop.
+                        </p>
+                        <ol className="list-decimal list-inside text-gray-600 space-y-2">
+                          <li>Click "Connect" on your desktop</li>
+                          <li>Click "Download RDP File"</li>
+                          <li>Open the downloaded .rdp file</li>
+                          <li>Enter your credentials when prompted</li>
+                        </ol>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                          <p className="text-sm text-gray-900 font-medium mb-2">Windows:</p>
+                          <p className="text-sm text-gray-600">Built-in Remote Desktop Connection</p>
+                          <p className="text-sm text-gray-900 font-medium mb-2 mt-3">macOS:</p>
+                          <p className="text-sm text-gray-600">Download Microsoft Remote Desktop from App Store</p>
+                        </div>
+                      </div>
+                    )}
+        {activeTab === 'vnc' && (
+          <div className="prose prose-gray max-w-none">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              VNC Connection
+            </h3>
+            <p className="text-gray-600 mb-4">
+              For users who prefer VNC clients.
+            </p>
+            <ol className="list-decimal list-inside text-gray-600 space-y-2">
+              <li>Install a VNC client (RealVNC, TightVNC, etc.)</li>
+              <li>Click "Connect" on your desktop</li>
+              <li>Click "Copy VNC Address"</li>
+              <li>Paste the address into your VNC client</li>
+              <li>Enter your credentials when prompted</li>
+            </ol>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="p-6 text-center">

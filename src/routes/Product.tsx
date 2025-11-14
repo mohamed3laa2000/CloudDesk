@@ -16,10 +16,10 @@ export function Product() {
               Access fully-configured cloud desktops from any device. Run demanding applications without expensive hardware.
             </p>
             <div className="flex gap-4 justify-center">
-              <Button variant="primary" size="large">
+              <Button variant="primary" size="lg">
                 Start Free Trial
               </Button>
-              <Button variant="secondary" size="large">
+              <Button variant="secondary" size="lg">
                 View Demo
               </Button>
             </div>
@@ -205,7 +205,7 @@ export function Product() {
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             Create your first cloud desktop in under 60 seconds. No credit card required.
           </p>
-          <Button variant="primary" size="large">
+          <Button variant="primary" size="lg">
             Start Free Trial
           </Button>
           <p className="text-sm text-gray-500 mt-4">

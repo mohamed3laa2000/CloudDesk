@@ -253,7 +253,7 @@ export function Pricing() {
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             No credit card required. $25 in free credits. Cancel anytime.
           </p>
-          <Button variant="primary" size="large">
+          <Button variant="primary" size="lg">
             Get Started Free
           </Button>
         </Card>
