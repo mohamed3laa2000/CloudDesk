@@ -11,13 +11,28 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo + Brand */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CD</span>
+            <div className="flex items-center gap-8">
+              <Link to="/" className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">CD</span>
+                </div>
+                <span className="text-lg font-semibold text-gray-900">
+                  CloudDesk EDU
+                </span>
+              </Link>
+              
+              {/* Center: Navigation Links */}
+              <div className="hidden md:flex items-center gap-6">
+                <Link to="/product" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  Product
+                </Link>
+                <Link to="/pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  Pricing
+                </Link>
+                <Link to="/docs" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  Documentation
+                </Link>
               </div>
-              <span className="text-lg font-semibold text-gray-900">
-                CloudDesk EDU
-              </span>
             </div>
 
             {/* Right: Actions */}
