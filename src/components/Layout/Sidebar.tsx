@@ -50,8 +50,16 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-60 border-r border-slate-200 bg-white">
+    <aside className="fixed left-0 top-0 h-screen w-60 border-r border-slate-200 bg-white">
       <div className="flex flex-col h-full">
+        {/* Logo & Brand */}
+        <div className="h-16 flex items-center gap-3 px-4 border-b border-slate-200">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <img src="/logo-clouddesk.png" alt="CloudDesk EDU" className="w-9 h-9 object-contain" />
+            <span className="text-base font-semibold text-gray-900">CloudDesk</span>
+          </Link>
+        </div>
+
         {/* Navigation Items */}
         <nav className="flex-1 p-3 space-y-1">
           {navItems.map((item) => {

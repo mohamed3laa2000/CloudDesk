@@ -25,25 +25,18 @@ export const TopNav: React.FC = () => {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
-      <div className="max-w-[1280px] mx-auto px-6 md:px-8">
+    <nav className="sticky top-0 z-40 bg-white border-b border-gray-200 ml-60">
+      <div className="px-6 md:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="hover:opacity-80 transition-opacity">
-              <img src="/logo-clouddesk.png" alt="CloudDesk EDU" className="w-10 h-10 object-contain" />
-            </Link>
-            
-            {/* Breadcrumb / Page Title */}
-            <div className="hidden md:block">
-              <h1 className="text-base font-semibold text-gray-900">
-                {location.pathname === '/dashboard' && 'Dashboard'}
-                {location.pathname === '/create' && 'Create Instance'}
-                {location.pathname === '/usage' && 'Usage & Billing'}
-                {location.pathname === '/classroom' && 'Classroom Mode'}
-                {location.pathname.startsWith('/instances/') && 'Instance Details'}
-              </h1>
-            </div>
+          {/* Left: Page Title */}
+          <div>
+            <h1 className="text-base font-semibold text-gray-900">
+              {location.pathname === '/dashboard' && 'Instances'}
+              {location.pathname === '/create' && 'Create Instance'}
+              {location.pathname === '/usage' && 'Usage & Billing'}
+              {location.pathname === '/classroom' && 'Classroom Mode'}
+              {location.pathname.startsWith('/instances/') && 'Instance Details'}
+            </h1>
           </div>
 
           {/* Right: Actions */}
