@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Monitor, Code, BarChart, Box } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -43,6 +43,7 @@ const GPU_OPTIONS: { value: GpuType; label: string; description: string; priceIm
 
 export default function CreateInstance() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { createInstance } = useInstancesDemo();
 
   // Form state
@@ -55,6 +56,28 @@ export default function CreateInstance() {
   const [gpu, setGpu] = useState<GpuType>('NONE');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load preset from URL parameters
+  useEffect(() => {
+    const presetParam = searchParams.get('preset');
+    if (presetParam) {
+      // Map preset names from use cases to actual preset IDs
+      const presetMapping: Record<string, { id: string; cpu: number; ram: number; storage: number; gpu: GpuType }> = {
+        'development': { id: 'dev-engineering', cpu: 4, ram: 8, storage: 50, gpu: 'NONE' },
+        'engineering': { id: '3d-rendering-cad', cpu: 8, ram: 32, storage: 100, gpu: 'T4' },
+        'data-science': { id: 'data-science-ml', cpu: 8, ram: 64, storage: 200, gpu: 'A100' },
+      };
+
+      const presetConfig = presetMapping[presetParam];
+      if (presetConfig) {
+        setSelectedPresetId(presetConfig.id);
+        setCpuCores(presetConfig.cpu);
+        setRamGb(presetConfig.ram);
+        setStorageGb(presetConfig.storage);
+        setGpu(presetConfig.gpu);
+      }
+    }
+  }, [searchParams]);
 
   // Handle preset selection
   const handlePresetSelect = (presetId: string) => {

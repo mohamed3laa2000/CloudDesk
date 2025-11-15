@@ -670,7 +670,7 @@ export function UseCases() {
                   Only pay for compute time. Storage charged separately at $0.10/GB/month.
                 </p>
                 <div className="flex gap-3">
-                  <Link to="/create" className="flex-1">
+                  <Link to={`/create?preset=${selectedPreset}`} className="flex-1">
                     <Button variant="primary" className="w-full">
                       Create Desktop
                     </Button>
