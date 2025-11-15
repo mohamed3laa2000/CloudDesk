@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/Layout/AppShell';
+import { AuthProvider } from './contexts/AuthContext';
+import { AuthGuard } from './components/Auth/AuthGuard';
 import Landing from './routes/Landing';
+import Login from './routes/Login';
 import { Product } from './routes/Product';
 import { Pricing } from './routes/Pricing';
 import { UseCases } from './routes/UseCases';
@@ -25,38 +28,41 @@ import Classroom from './routes/Classroom';
 
 function App() {
   return (
-    <Routes>
-      {/* Public pages without sidebar */}
-      <Route path="/" element={<Landing />} />
-      <Route path="/product" element={<Product />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/use-cases" element={<UseCases />} />
-      <Route path="/docs" element={<Documentation />} />
-      <Route path="/docs/getting-started" element={<GettingStarted />} />
-      <Route path="/docs/api" element={<APIReference />} />
-      <Route path="/docs/faq" element={<FAQ />} />
-      <Route path="/docs/faq-accordion" element={<FAQAccordion />} />
-      <Route path="/community" element={<Community />} />
-      <Route path="/support" element={<Support />} />
-      <Route path="/security" element={<Security />} />
-      <Route path="/interactive-demo" element={<InteractiveDemo />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      
-      {/* Application routes with sidebar */}
-      <Route element={<AppShell showSidebar={true} />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/create" element={<CreateInstance />} />
-        <Route path="/instances/:id" element={<InstanceDetail />} />
-        <Route path="/usage" element={<Usage />} />
-        <Route path="/classroom" element={<Classroom />} />
-      </Route>
-      
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        {/* Public pages without sidebar */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/product" element={<Product />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/use-cases" element={<UseCases />} />
+        <Route path="/docs" element={<Documentation />} />
+        <Route path="/docs/getting-started" element={<GettingStarted />} />
+        <Route path="/docs/api" element={<APIReference />} />
+        <Route path="/docs/faq" element={<FAQ />} />
+        <Route path="/docs/faq-accordion" element={<FAQAccordion />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/security" element={<Security />} />
+        <Route path="/interactive-demo" element={<InteractiveDemo />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        
+        {/* Protected application routes with sidebar */}
+        <Route element={<AuthGuard><AppShell showSidebar={true} /></AuthGuard>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create" element={<CreateInstance />} />
+          <Route path="/instances/:id" element={<InstanceDetail />} />
+          <Route path="/usage" element={<Usage />} />
+          <Route path="/classroom" element={<Classroom />} />
+        </Route>
+        
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 

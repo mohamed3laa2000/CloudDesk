@@ -19,6 +19,13 @@ CloudDesk EDU is a modern, enterprise-grade SaaS platform that provides instant 
 
 ## ✨ Features
 
+### 🔐 Authentication & Security
+- **Firebase Authentication**: Secure Google OAuth integration
+- **JWT Token Management**: Stateless authentication with secure token handling
+- **Domain Restriction**: Universitas Brawijaya (@ub.ac.id) email validation
+- **Protected Routes**: Automatic authentication guards for secure pages
+- **PostgreSQL User Management**: Approved user whitelist with database persistence
+
 ### 🖥️ Cloud Desktop Management
 - **Instant Provisioning**: Deploy fully-configured desktops in seconds
 - **Multiple Presets**: Pre-optimized configurations for Development, Data Science, 3D Rendering, and General Purpose
@@ -55,6 +62,8 @@ CloudDesk EDU is a modern, enterprise-grade SaaS platform that provides instant 
 ### Prerequisites
 
 - Node.js 18+ and npm 9+
+- PostgreSQL database (Supabase recommended)
+- Firebase project with Google OAuth enabled
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ### Installation
@@ -64,14 +73,36 @@ CloudDesk EDU is a modern, enterprise-grade SaaS platform that provides instant 
 git clone https://github.com/rofiperlungoding/CloudDesk.git
 cd CloudDesk
 
-# Install dependencies
+# Install frontend dependencies
 npm install
 
-# Start development server
+# Install backend dependencies
+cd server
+npm install
+cd ..
+
+# Configure environment variables
+# Copy .env.example to .env and fill in your values
+cp .env.example .env
+cp server/.env.example server/.env
+
+# Run database migrations
+cd server
+npm run migrate
+npm run seed
+cd ..
+
+# Start backend server (in one terminal)
+cd server
+npm start
+
+# Start frontend development server (in another terminal)
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+The application will be available at:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:3001`
 
 ### Build for Production
 
@@ -99,9 +130,31 @@ CloudDesk/
 │   ├── classroom-mode-page-spec.md    # Future feature preview
 │   └── ui-consistency-checklist.md    # Quality assurance guide
 │
+├── server/                        # Backend API server
+│   ├── controllers/               # Request handlers
+│   │   └── authController.js      # Authentication logic
+│   ├── middleware/                # Express middleware
+│   │   └── errorHandler.js        # Global error handling
+│   ├── services/                  # Business logic
+│   │   ├── firebaseAdmin.js       # Firebase Admin SDK
+│   │   ├── jwtService.js          # JWT token management
+│   │   └── dbService.js           # Database operations
+│   ├── routes/                    # API routes
+│   │   └── auth.js                # Authentication endpoints
+│   ├── config/                    # Configuration
+│   │   └── database.js            # PostgreSQL connection
+│   ├── migrations/                # Database migrations
+│   │   ├── 001_create_approved_users.sql
+│   │   └── 002_seed_approved_users.sql
+│   ├── tests/                     # Unit tests
+│   └── index.js                   # Server entry point
+│
 ├── src/
 │   ├── components/
-│   │   ├── layout/                # App shell, navigation, sidebar
+│   │   ├── Auth/                  # Authentication components
+│   │   │   └── AuthGuard.tsx      # Protected route wrapper
+│   │   ├── Layout/                # App shell, navigation, sidebar
+│   │   │   └── TopNav.tsx         # Top navigation with user menu
 │   │   └── ui/                    # Reusable UI components
 │   │       ├── Button.tsx         # Primary, secondary, ghost variants
 │   │       ├── Card.tsx           # Content containers
@@ -111,13 +164,21 @@ CloudDesk/
 │   │       ├── Tabs.tsx           # Tab navigation
 │   │       └── ComponentShowcase.tsx  # Component documentation
 │   │
+│   ├── contexts/                  # React contexts
+│   │   └── AuthContext.tsx        # Authentication state management
+│   │
+│   ├── services/                  # API services
+│   │   ├── api.ts                 # Axios instance with interceptors
+│   │   └── firebase.ts            # Firebase client configuration
+│   │
 │   ├── routes/                    # Page components
+│   │   ├── Login.tsx              # Login page with Google OAuth
 │   │   ├── Landing.tsx            # Public landing page
-│   │   ├── Dashboard.tsx          # Instance overview
-│   │   ├── CreateInstance.tsx     # Instance creation wizard
-│   │   ├── InstanceDetail.tsx     # Single instance view
-│   │   ├── Usage.tsx              # Analytics and billing
-│   │   └── Classroom.tsx          # Feature preview
+│   │   ├── Dashboard.tsx          # Instance overview (protected)
+│   │   ├── CreateInstance.tsx     # Instance creation wizard (protected)
+│   │   ├── InstanceDetail.tsx     # Single instance view (protected)
+│   │   ├── Usage.tsx              # Analytics and billing (protected)
+│   │   └── Classroom.tsx          # Feature preview (protected)
 │   │
 │   ├── data/                      # Mock data and types
 │   │   ├── types.ts               # TypeScript interfaces
@@ -253,17 +314,44 @@ import { Badge } from '@/components/ui/Badge';
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+#### Frontend Configuration
+
+Create a `.env` file in the root directory (see `.env.example`):
 
 ```env
-# API Configuration (for future backend integration)
-VITE_API_URL=https://api.clouddesk.edu
-VITE_API_KEY=your_api_key_here
+# Backend API URL
+VITE_API_URL=http://localhost:3001
 
-# Feature Flags
-VITE_ENABLE_CLASSROOM_MODE=false
-VITE_ENABLE_ANALYTICS=true
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
 ```
+
+#### Backend Configuration
+
+Create a `server/.env` file (see `server/.env.example`):
+
+```env
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_minimum_32_characters
+
+# PostgreSQL Database
+DATABASE_URL=postgresql://username:password@host:5432/database
+
+# Firebase Admin SDK
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+```
+
+**Important**: Never commit `.env` files to version control. They are already included in `.gitignore`.
 
 ### Tailwind Configuration
 
@@ -340,22 +428,27 @@ Each page has detailed design specifications:
 - ✅ Complete design system with teal corporate branding
 - ✅ CloudDesk logo integration across all pages
 - ✅ All core pages implemented (15+ routes)
+- ✅ Firebase Authentication with Google OAuth
+- ✅ JWT token-based authorization
+- ✅ PostgreSQL database with user management
+- ✅ Protected routes with authentication guards
+- ✅ Domain-restricted login (@ub.ac.id)
+- ✅ Backend API with Express.js
 - ✅ 13 global server regions
 - ✅ 8 GPU options with categorization
 - ✅ Responsive design
 - ✅ Accessibility compliance (WCAG AA)
 - ✅ Professional icon system (Lucide React)
 - ✅ Legal pages (Privacy Policy, Terms of Service)
-- ✅ Mock data layer
 
 ### Upcoming Features
-- 🔄 Backend API integration
 - 🔄 Real-time instance monitoring
-- 🔄 User authentication and authorization
 - 🔄 Classroom Mode implementation
 - 🔄 Advanced analytics and reporting
 - 🔄 Multi-language support
 - 🔄 Dark mode theme
+- 🔄 Email notifications
+- 🔄 Two-factor authentication
 
 ## 🤝 Contributing
 
@@ -384,6 +477,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **CloudDesk EDU** is developed and maintained by:
 - **Rofi Perlungoding** - [@rofiperlungoding](https://github.com/rofiperlungoding)
+- **Gabriel Seto Pribadi** - [@private4920](https://github.com/private4920)
 
 ## 🙏 Acknowledgments
 

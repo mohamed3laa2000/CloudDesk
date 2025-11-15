@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, HelpCircle, User, LogOut, Menu } from 'lucide-react';
 import { Badge } from '../ui/Badge';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TopNavProps {
   onMenuClick?: () => void;
@@ -11,13 +12,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // Mock user data
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: null,
-  };
+  const { user, logout } = useAuth();
 
   // Mock notifications
   const notifications = [
@@ -80,7 +75,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                   <div className="px-4 py-2 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
@@ -122,18 +117,18 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
               >
                 <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                   </span>
                 </div>
               </button>
 
               {/* User Dropdown */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
+                    <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{user?.email || ''}</p>
                   </div>
 
                   {/* Menu Items */}
@@ -146,7 +141,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
 
                   {/* Logout */}
                   <div className="border-t border-gray-200 pt-1">
-                    <button className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full">
+                    <button 
+                      onClick={logout}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                    >
                       <LogOut className="w-4 h-4" />
                       Sign Out
                     </button>
