@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo-clouddesk.png" alt="CloudDesk EDU Logo" width="120" height="120">
+  <img src="Foto/Logo CloudDesk White.png" alt="CloudDesk EDU Logo" width="120" height="120">
   
   # CloudDesk EDU
   
