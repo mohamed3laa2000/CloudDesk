@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CheckCircle, Monitor, Code, BarChart, Box } from 'lucide-react';
+import { Monitor, Code, BarChart, Box } from 'lucide-react';
 import { Card } from '../components/ui/Card';
-import { InteractiveCard } from '../components/ui/InteractiveCard';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';

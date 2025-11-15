@@ -81,10 +81,6 @@ export default function Dashboard() {
     }
   };
 
-  const formatResources = (cpuCores: number, ramGb: number, storageGb: number) => {
-    return `${cpuCores} vCPU · ${ramGb} GB RAM · ${storageGb} GB`;
-  };
-
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
