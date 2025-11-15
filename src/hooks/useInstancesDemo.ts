@@ -1,13 +1,35 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { INITIAL_INSTANCES } from '../data/instances';
 import type { Instance, InstanceStatus } from '../data/types';
 
+const STORAGE_KEY = 'clouddesk_instances';
+
 /**
- * Demo hook for managing instance state in memory.
- * Provides CRUD operations for instances without any backend persistence.
+ * Demo hook for managing instance state with localStorage persistence.
+ * Provides CRUD operations for instances without backend.
  */
 export function useInstancesDemo() {
-  const [instances, setInstances] = useState<Instance[]>(INITIAL_INSTANCES);
+  // Load from localStorage or use initial data
+  const [instances, setInstances] = useState<Instance[]>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Failed to load instances from localStorage:', error);
+    }
+    return INITIAL_INSTANCES;
+  });
+
+  // Save to localStorage whenever instances change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(instances));
+    } catch (error) {
+      console.error('Failed to save instances to localStorage:', error);
+    }
+  }, [instances]);
 
   /**
    * Create a new instance with generated ID and timestamps.
