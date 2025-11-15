@@ -15,7 +15,10 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
+import { LiveIndicator } from '../components/ui/LiveIndicator';
+import { LastUpdated } from '../components/ui/LastUpdated';
 import { useInstancesDemo } from '../hooks/useInstancesDemo';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { getPresetName } from '../data/images';
 import { REGION_NAMES } from '../data/types';
 import type { InstanceStatus } from '../data/types';
@@ -26,6 +29,19 @@ export default function Dashboard() {
   const { instances, updateStatus, deleteInstance } = useInstancesDemo();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-refresh every 10 seconds
+  useAutoRefresh(() => {
+    setLastUpdated(new Date());
+  }, { interval: 10000 });
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setLastUpdated(new Date());
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   // Filter instances based on search and status
   const filteredInstances = useMemo(() => {
@@ -48,13 +64,21 @@ export default function Dashboard() {
   // Simplified cost calculation (based on running instances)
   const estimatedMonthlyCost = runningInstances * 42.5; // Rough estimate per instance
 
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     e: React.MouseEvent,
     id: string,
     newStatus: InstanceStatus
   ) => {
     e.stopPropagation();
+    
+    // Optimistic update - instant UI feedback
     updateStatus(id, newStatus);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Refresh timestamp after update
+    setLastUpdated(new Date());
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -293,6 +317,10 @@ export default function Dashboard() {
                   {/* Left: Name, Status, Resources */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                      <LiveIndicator 
+                        status={instance.status.toLowerCase() as any}
+                        size="sm"
+                      />
                       <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
                         {instance.name}
                       </h3>
@@ -388,8 +416,15 @@ export default function Dashboard() {
 
       {/* Results Info */}
       {filteredInstances.length > 0 && (
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {filteredInstances.length} of {instances.length} desktops
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {filteredInstances.length} of {instances.length} desktops
+          </div>
+          <LastUpdated 
+            timestamp={lastUpdated} 
+            onRefresh={handleManualRefresh}
+            isRefreshing={isRefreshing}
+          />
         </div>
       )}
     </div>
