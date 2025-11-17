@@ -1,5 +1,5 @@
 import type { Instance, UsageRow, UsageSummary, DailyUsage, PricingConfig } from './types';
-import { calculateHourlyCost, calculateCostForHours } from './pricing';
+import { calculateHourlyCost, calculateCostForHours, PRICING_CONFIG } from './pricing';
 
 /**
  * Hard-coded usage hours for demo instances
@@ -20,7 +20,22 @@ const DEMO_USAGE_HOURS: Record<string, number> = {
 export function buildUsage(instances: Instance[], _pricing?: PricingConfig): UsageRow[] {
   return instances.map((instance) => {
     const hours = DEMO_USAGE_HOURS[instance.id] || 0;
+    
+    // Calculate compute hourly rate (CPU + RAM + GPU)
+    const cpuCost = instance.cpuCores * PRICING_CONFIG.basePerCpuPerHour;
+    const ramCost = instance.ramGb * PRICING_CONFIG.basePerRamGbPerHour;
+    const gpuCost = PRICING_CONFIG.gpuExtraPerHour[instance.gpu];
+    const computeHourlyRate = (cpuCost + ramCost + gpuCost) * PRICING_CONFIG.markupRate;
+    
+    // Calculate storage hourly rate
+    const storageHourlyRate = instance.storageGb * PRICING_CONFIG.basePerStorageGbPerHour * PRICING_CONFIG.markupRate;
+    
+    // Calculate total hourly rate
     const avgHourlyRate = calculateHourlyCost(instance);
+    
+    // Calculate costs for the hours used
+    const computeCost = Math.round(computeHourlyRate * hours * 100) / 100;
+    const storageCost = Math.round(storageHourlyRate * hours * 100) / 100;
     const estimatedCost = calculateCostForHours(instance, hours);
 
     return {
@@ -28,7 +43,11 @@ export function buildUsage(instances: Instance[], _pricing?: PricingConfig): Usa
       instanceName: instance.name,
       status: instance.status,
       hours,
+      computeHourlyRate: Math.round(computeHourlyRate * 100) / 100,
+      storageHourlyRate: Math.round(storageHourlyRate * 1000) / 1000,
       avgHourlyRate,
+      computeCost,
+      storageCost,
       estimatedCost,
     };
   });
@@ -40,12 +59,16 @@ export function buildUsage(instances: Instance[], _pricing?: PricingConfig): Usa
 export function calculateUsageSummary(usageRows: UsageRow[]): UsageSummary {
   const totalHours = usageRows.reduce((sum, row) => sum + row.hours, 0);
   const totalCost = usageRows.reduce((sum, row) => sum + row.estimatedCost, 0);
+  const totalComputeCost = usageRows.reduce((sum, row) => sum + row.computeCost, 0);
+  const totalStorageCost = usageRows.reduce((sum, row) => sum + row.storageCost, 0);
   const activeDesktops = usageRows.filter((row) => row.hours > 0).length;
   const averageCostPerDesktop = activeDesktops > 0 ? totalCost / activeDesktops : 0;
 
   return {
     totalHours: Math.round(totalHours * 10) / 10,
     totalCost: Math.round(totalCost * 100) / 100,
+    totalComputeCost: Math.round(totalComputeCost * 100) / 100,
+    totalStorageCost: Math.round(totalStorageCost * 100) / 100,
     averageCostPerDesktop: Math.round(averageCostPerDesktop * 100) / 100,
     activeDesktops,
   };

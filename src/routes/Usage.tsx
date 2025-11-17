@@ -35,6 +35,8 @@ export default function Usage() {
           summary: {
             totalHours: data.totalHours,
             totalCost: data.totalCost,
+            totalComputeCost: data.totalComputeCost,
+            totalStorageCost: data.totalStorageCost,
             averageCostPerDesktop: data.averageCostPerDesktop,
             activeDesktops: data.activeDesktops,
           },
@@ -100,9 +102,10 @@ export default function Usage() {
     );
   }
 
-  // Show empty state for authenticated users with no instances
-  const hasNoInstances = instances.length === 0 || usageRows.length === 0;
-  if (hasNoInstances && isAuthenticated && !isDemo) {
+  // Show empty state only for authenticated users who have never created instances
+  // If usageRows.length > 0, show billing history even if all instances are deleted
+  const hasNeverCreatedInstances = usageRows.length === 0;
+  if (hasNeverCreatedInstances && isAuthenticated && !isDemo) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Page Header */}
@@ -214,11 +217,13 @@ export default function Usage() {
                       variant={
                         row.status === 'RUNNING' ? 'success' : 
                         row.status === 'STOPPED' ? 'neutral' : 
+                        row.status === 'DELETED' ? 'error' :
                         'info'
                       }
                     >
                       {row.status === 'RUNNING' ? 'Running' : 
                        row.status === 'STOPPED' ? 'Stopped' : 
+                       row.status === 'DELETED' ? 'Deleted' :
                        'Provisioning'}
                     </Badge>
                   </div>
@@ -271,7 +276,10 @@ export default function Usage() {
                   Hours Used
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
-                  Avg. Hourly Rate
+                  Compute Cost
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
+                  Storage Cost
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
                   Total Cost
@@ -300,11 +308,13 @@ export default function Usage() {
                         variant={
                           row.status === 'RUNNING' ? 'success' : 
                           row.status === 'STOPPED' ? 'neutral' : 
+                          row.status === 'DELETED' ? 'error' :
                           'info'
                         }
                       >
                         {row.status === 'RUNNING' ? 'Running' : 
                          row.status === 'STOPPED' ? 'Stopped' : 
+                         row.status === 'DELETED' ? 'Deleted' :
                          'Provisioning'}
                       </Badge>
                     </td>
@@ -312,7 +322,10 @@ export default function Usage() {
                       {row.hours.toFixed(1)}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-600">
-                      ${row.avgHourlyRate.toFixed(2)}
+                      ${row.computeCost.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-600">
+                      ${row.storageCost.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
                       ${row.estimatedCost.toFixed(2)}
@@ -331,7 +344,10 @@ export default function Usage() {
                   {summary.totalHours.toFixed(1)}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                  ${(summary.totalCost / summary.totalHours || 0).toFixed(2)} avg
+                  ${summary.totalComputeCost.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  ${summary.totalStorageCost.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
                   ${summary.totalCost.toFixed(2)}
@@ -358,11 +374,13 @@ export default function Usage() {
                     variant={
                       row.status === 'RUNNING' ? 'success' : 
                       row.status === 'STOPPED' ? 'neutral' : 
+                      row.status === 'DELETED' ? 'error' :
                       'info'
                     }
                   >
                     {row.status === 'RUNNING' ? 'Running' : 
                      row.status === 'STOPPED' ? 'Stopped' : 
+                     row.status === 'DELETED' ? 'Deleted' :
                      'Provisioning'}
                   </Badge>
                 </div>
@@ -372,8 +390,12 @@ export default function Usage() {
                     <span className="font-medium text-gray-900">{row.hours.toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Hourly Rate:</span>
-                    <span className="font-medium text-gray-900">${row.avgHourlyRate.toFixed(2)}/hr</span>
+                    <span className="text-gray-500">Compute Cost:</span>
+                    <span className="font-medium text-gray-900">${row.computeCost.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Storage Cost:</span>
+                    <span className="font-medium text-gray-900">${row.storageCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-gray-200">
                     <span className="text-gray-500 font-medium">Total Cost:</span>
@@ -392,8 +414,12 @@ export default function Usage() {
                 <span className="font-semibold text-gray-900">{summary.totalHours.toFixed(1)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700 font-medium">Avg Rate:</span>
-                <span className="font-semibold text-gray-900">${(summary.totalCost / summary.totalHours || 0).toFixed(2)}/hr</span>
+                <span className="text-gray-700 font-medium">Total Compute Cost:</span>
+                <span className="font-semibold text-gray-900">${summary.totalComputeCost.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-700 font-medium">Total Storage Cost:</span>
+                <span className="font-semibold text-gray-900">${summary.totalStorageCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-indigo-300">
                 <span className="text-gray-900 font-semibold">Total Cost:</span>

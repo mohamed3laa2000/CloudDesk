@@ -382,14 +382,35 @@ const calculateUsageSummary = async (email) => {
       throw new Error('Database connection not established. Call connect() first.');
     }
 
-    // Get all user instances (excluding DELETED)
-    const instances = await getInstancesByUser(email);
+    // Get ALL user instances including DELETED ones for billing history
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        name,
+        image_id,
+        status,
+        cpu_cores,
+        ram_gb,
+        storage_gb,
+        gpu,
+        region,
+        created_at,
+        updated_at
+      FROM instances 
+      WHERE user_email = $1
+      ORDER BY created_at DESC
+    `;
+    const result = await pool.query(query, [email]);
+    const allInstances = result.rows.map(transformInstanceRow);
 
     // If no instances, return zero summary
-    if (instances.length === 0) {
+    if (allInstances.length === 0) {
       return {
         totalHours: 0,
         totalCost: 0,
+        totalComputeCost: 0,
+        totalStorageCost: 0,
         averageCostPerDesktop: 0,
         activeDesktops: 0,
         usageByInstance: []
@@ -415,28 +436,40 @@ const calculateUsageSummary = async (email) => {
     };
 
     /**
-     * Calculate hourly cost for an instance
+     * Calculate hourly costs for an instance (split into compute and storage)
      */
     const calculateHourlyCost = (instance) => {
+      // Compute costs: CPU + RAM + GPU
       const cpuCost = instance.cpuCores * PRICING_CONFIG.basePerCpuPerHour;
       const ramCost = instance.ramGb * PRICING_CONFIG.basePerRamGbPerHour;
-      const storageCost = instance.storageGb * PRICING_CONFIG.basePerStorageGbPerHour;
       const gpuCost = PRICING_CONFIG.gpuExtraPerHour[instance.gpu] || 0;
+      const computeHourlyRate = (cpuCost + ramCost + gpuCost) * PRICING_CONFIG.markupRate;
 
-      const totalCost = (cpuCost + ramCost + storageCost + gpuCost) * PRICING_CONFIG.markupRate;
+      // Storage costs: Disk only
+      const storageHourlyRate = instance.storageGb * PRICING_CONFIG.basePerStorageGbPerHour * PRICING_CONFIG.markupRate;
 
-      return Math.round(totalCost * 100) / 100; // Round to 2 decimal places
+      // Total hourly rate
+      const totalHourlyRate = computeHourlyRate + storageHourlyRate;
+
+      return {
+        computeHourlyRate: Math.round(computeHourlyRate * 100) / 100,
+        storageHourlyRate: Math.round(storageHourlyRate * 100) / 100,
+        totalHourlyRate: Math.round(totalHourlyRate * 100) / 100
+      };
     };
 
     /**
-     * Calculate hours since instance creation
-     * For now, we calculate based on created_at timestamp
-     * In a real system, this would track actual running hours
+     * Calculate billable hours for an instance
+     * For DELETED instances: from created_at to updated_at (deletion time)
+     * For active instances: from created_at to now
      */
-    const calculateHoursSinceCreation = (createdAt) => {
-      const now = new Date();
-      const created = new Date(createdAt);
-      const diffMs = now - created;
+    const calculateBillableHours = (instance) => {
+      const created = new Date(instance.createdAt);
+      const endTime = instance.status === 'DELETED' 
+        ? new Date(instance.updatedAt)  // Use deletion time for deleted instances
+        : new Date();  // Use current time for active instances
+      
+      const diffMs = endTime - created;
       const diffHours = diffMs / (1000 * 60 * 60);
       return Math.max(0, Math.round(diffHours * 100) / 100); // Round to 2 decimal places
     };
@@ -444,43 +477,59 @@ const calculateUsageSummary = async (email) => {
     // Calculate usage for each instance
     let totalHours = 0;
     let totalCost = 0;
+    let totalComputeCost = 0;
+    let totalStorageCost = 0;
     const usageByInstance = [];
 
-    for (const instance of instances) {
-      const hourlyCost = calculateHourlyCost(instance);
-      const hours = calculateHoursSinceCreation(instance.createdAt);
-      const estimatedCost = Math.round(hourlyCost * hours * 100) / 100;
+    for (const instance of allInstances) {
+      const costs = calculateHourlyCost(instance);
+      const hours = calculateBillableHours(instance);
+      
+      // Calculate separate compute and storage costs
+      const computeCost = Math.round(costs.computeHourlyRate * hours * 100) / 100;
+      const storageCost = Math.round(costs.storageHourlyRate * hours * 100) / 100;
+      const estimatedCost = Math.round(costs.totalHourlyRate * hours * 100) / 100;
 
       totalHours += hours;
       totalCost += estimatedCost;
+      totalComputeCost += computeCost;
+      totalStorageCost += storageCost;
 
       usageByInstance.push({
         instanceId: instance.id,
         instanceName: instance.name,
         status: instance.status,
         hours: hours,
-        avgHourlyRate: hourlyCost,
-        estimatedCost: estimatedCost
+        computeHourlyRate: costs.computeHourlyRate,
+        storageHourlyRate: costs.storageHourlyRate,
+        avgHourlyRate: costs.totalHourlyRate,  // Backward compatibility
+        computeCost: computeCost,
+        storageCost: storageCost,
+        estimatedCost: estimatedCost  // Backward compatibility
       });
     }
 
-    // Count active desktops (RUNNING or PROVISIONING)
-    const activeDesktops = instances.filter(
+    // Count active desktops (RUNNING or PROVISIONING) - exclude DELETED and STOPPED
+    const activeDesktops = allInstances.filter(
       inst => inst.status === 'RUNNING' || inst.status === 'PROVISIONING'
     ).length;
 
-    // Calculate average cost per desktop
-    const averageCostPerDesktop = instances.length > 0 
-      ? Math.round((totalCost / instances.length) * 100) / 100 
+    // Calculate average cost per desktop (only for instances that have accumulated cost)
+    const averageCostPerDesktop = allInstances.length > 0 
+      ? Math.round((totalCost / allInstances.length) * 100) / 100 
       : 0;
 
     // Round totals
     totalHours = Math.round(totalHours * 100) / 100;
     totalCost = Math.round(totalCost * 100) / 100;
+    totalComputeCost = Math.round(totalComputeCost * 100) / 100;
+    totalStorageCost = Math.round(totalStorageCost * 100) / 100;
 
     return {
       totalHours,
       totalCost,
+      totalComputeCost,
+      totalStorageCost,
       averageCostPerDesktop,
       activeDesktops,
       usageByInstance
