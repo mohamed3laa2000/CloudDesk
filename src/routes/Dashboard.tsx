@@ -20,6 +20,7 @@ import { LastUpdated } from '../components/ui/LastUpdated';
 import { useInstancesDemo } from '../hooks/useInstancesDemo';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useDemo } from '../contexts/DemoContext';
 import { getPresetName } from '../data/images';
 import { REGION_NAMES } from '../data/types';
 import type { InstanceStatus } from '../data/types';
@@ -27,11 +28,20 @@ import type { InstanceStatus } from '../data/types';
 type StatusFilter = 'all' | 'running' | 'stopped' | 'provisioning';
 
 export default function Dashboard() {
-  const { instances, updateStatus, deleteInstance } = useInstancesDemo();
+  const { instances, updateStatus, deleteInstance, isDemo } = useInstancesDemo();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Get demo context if available (for demo routes)
+  let isDemoMode = isDemo;
+  try {
+    const demoContext = useDemo();
+    isDemoMode = demoContext.isDemo;
+  } catch {
+    // Not in demo context, use isDemo from hook
+  }
 
   // Auto-refresh every 10 seconds
   useAutoRefresh(() => {
@@ -82,20 +92,32 @@ export default function Dashboard() {
   ) => {
     e.stopPropagation();
     
-    // Optimistic update - instant UI feedback
-    updateStatus(id, newStatus);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Refresh timestamp after update
-    setLastUpdated(new Date());
+    try {
+      // Call updateStatus which handles both demo and authenticated modes
+      await updateStatus(id, newStatus);
+      
+      // Refresh timestamp after update
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to update instance status:', error);
+      alert('Failed to update instance status. Please try again.');
+    }
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this instance?')) {
-      deleteInstance(id);
+    const confirmMessage = isDemoMode 
+      ? 'Are you sure you want to delete this instance? (Demo mode: This will only remove it from your browser storage)'
+      : 'Are you sure you want to delete this instance?';
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        await deleteInstance(id);
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Failed to delete instance:', error);
+        alert('Failed to delete instance. Please try again.');
+      }
     }
   };
 
@@ -291,11 +313,15 @@ export default function Dashboard() {
         <Card className="p-8 sm:p-12 lg:p-16 text-center">
           <Monitor className="mx-auto mb-4 sm:mb-6 h-12 w-12 sm:h-16 sm:w-16 text-gray-300" />
           <h3 className="mb-2 sm:mb-3 text-base sm:text-lg font-semibold text-gray-900">
-            {instances.length === 0 ? 'No desktops yet' : 'No desktops found'}
+            {instances.length === 0 
+              ? (!isDemo ? 'No instances yet' : 'No desktops yet')
+              : 'No desktops found'}
           </h3>
           <p className="mx-auto mb-6 sm:mb-8 max-w-md text-sm sm:text-base text-gray-600">
             {instances.length === 0
-              ? 'Create your first cloud desktop to get started. Choose from pre-configured templates or customize your own.'
+              ? (!isDemo 
+                  ? 'You have zero instances. Create your first cloud desktop to get started with CloudDesk EDU.'
+                  : 'Create your first cloud desktop to get started. Choose from pre-configured templates or customize your own.')
               : 'No desktops match your current filters. Try adjusting your search or filter criteria.'}
           </p>
           {instances.length === 0 ? (
@@ -379,44 +405,68 @@ export default function Dashboard() {
                     
                     {/* Start/Stop Button */}
                     {instance.status === 'STOPPED' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleStatusUpdate(e, instance.id, 'RUNNING');
-                        }}
-                      >
-                        <Play className="mr-2 h-4 w-4" />
-                        Start
-                      </Button>
+                      <div className="relative group">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleStatusUpdate(e, instance.id, 'RUNNING');
+                          }}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Start
+                        </Button>
+                        {isDemoMode && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            Demo: Changes stored in browser only
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        )}
+                      </div>
                     )}
                     {instance.status === 'RUNNING' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleStatusUpdate(e, instance.id, 'STOPPED');
-                        }}
-                      >
-                        <Pause className="mr-2 h-4 w-4" />
-                        Stop
-                      </Button>
+                      <div className="relative group">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleStatusUpdate(e, instance.id, 'STOPPED');
+                          }}
+                        >
+                          <Pause className="mr-2 h-4 w-4" />
+                          Stop
+                        </Button>
+                        {isDemoMode && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            Demo: Changes stored in browser only
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        )}
+                      </div>
                     )}
                     
                     {/* Delete Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDelete(e, instance.id);
-                      }}
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="relative group">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDelete(e, instance.id);
+                        }}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      {isDemoMode && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          Demo: Removes from browser only
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>

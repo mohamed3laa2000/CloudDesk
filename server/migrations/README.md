@@ -24,6 +24,38 @@ Inserts sample approved email addresses for testing:
 
 Uses `ON CONFLICT DO NOTHING` to make the seed script idempotent.
 
+### 003_create_instances_and_billing.sql
+Creates the `instances` and `billing_records` tables for storing cloud desktop instances and billing data:
+
+**instances table:**
+- `id` - Unique instance identifier (VARCHAR 50, PRIMARY KEY)
+- `user_email` - Owner's email (VARCHAR 255, NOT NULL, FOREIGN KEY)
+- `name` - User-defined instance name (VARCHAR 255, NOT NULL)
+- `image_id` - Operating system image identifier (VARCHAR 50, NOT NULL)
+- `status` - Instance status: PROVISIONING, RUNNING, STOPPED, DELETED, ERROR (VARCHAR 20, NOT NULL)
+- `cpu_cores` - Number of CPU cores (INTEGER, NOT NULL, > 0)
+- `ram_gb` - RAM in gigabytes (INTEGER, NOT NULL, > 0)
+- `storage_gb` - Storage in gigabytes (INTEGER, NOT NULL, > 0)
+- `gpu` - GPU type: NONE, T4, A10G, A100 (VARCHAR 20, DEFAULT 'NONE')
+- `region` - Cloud region (VARCHAR 50, NOT NULL)
+- `created_at` - Creation timestamp (TIMESTAMP WITH TIME ZONE)
+- `updated_at` - Last update timestamp (TIMESTAMP WITH TIME ZONE)
+
+**billing_records table:**
+- `id` - Serial primary key
+- `instance_id` - Reference to instance (VARCHAR 50, FOREIGN KEY)
+- `user_email` - User being billed (VARCHAR 255, FOREIGN KEY)
+- `compute_hours` - Total compute hours (DECIMAL 10,2)
+- `storage_gb_hours` - Total storage GB-hours (DECIMAL 10,2)
+- `compute_cost` - Compute cost (DECIMAL 10,4)
+- `storage_cost` - Storage cost (DECIMAL 10,4)
+- `total_cost` - Total cost (DECIMAL 10,4)
+- `period_start` - Billing period start (TIMESTAMP WITH TIME ZONE)
+- `period_end` - Billing period end (TIMESTAMP WITH TIME ZONE)
+- `created_at` - Record creation timestamp (TIMESTAMP WITH TIME ZONE)
+
+Also creates indexes on user_email, status, created_at for instances, and user_email, instance_id, period for billing_records.
+
 ## Running Migrations
 
 Execute all migrations:

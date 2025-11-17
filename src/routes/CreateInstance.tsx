@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { useInstancesDemo } from '../hooks/useInstancesDemo';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useDemo } from '../contexts/DemoContext';
 import { IMAGE_PRESETS } from '../data/images';
 import { calculateHourlyCost, calculateMonthlyCost } from '../data/pricing';
 import type { Region, GpuType } from '../data/types';
@@ -45,7 +46,16 @@ const GPU_OPTIONS: { value: GpuType; label: string; description: string; priceIm
 export default function CreateInstance() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { createInstance } = useInstancesDemo();
+  const { createInstance, isDemo } = useInstancesDemo();
+  
+  // Get demo context if available (for demo routes)
+  let isDemoMode = isDemo;
+  try {
+    const demoContext = useDemo();
+    isDemoMode = demoContext.isDemo;
+  } catch {
+    // Not in demo context, use isDemo from hook
+  }
 
   // Form state
   const [selectedPresetId, setSelectedPresetId] = useState<string>('dev-engineering');
@@ -163,10 +173,7 @@ export default function CreateInstance() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      createInstance({
+      await createInstance({
         name: instanceName.trim(),
         imageId: selectedPresetId,
         cpuCores,
@@ -213,6 +220,16 @@ export default function CreateInstance() {
           <span className="text-gray-900">Create Desktop</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Create New Desktop</h1>
+        
+        {/* Demo Mode Reminder */}
+        {isDemoMode && (
+          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-xs text-amber-800">
+              <span className="font-semibold">Demo Mode:</span> This instance will be stored in your browser only. 
+              Your data won't be persisted to a database. <Link to="/onboarding" className="underline hover:text-amber-900">Sign up</Link> to save your work.
+            </p>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -472,9 +489,19 @@ export default function CreateInstance() {
                     </p>
                   </div>
                 </div>
-                <p className="mt-4 text-xs text-gray-600">
-                  Only charged when running
-                </p>
+                
+                {/* Billing Notice */}
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="text-xs font-semibold text-blue-900 mb-1.5">Billing Information</h4>
+                  <div className="space-y-1.5 text-xs text-blue-800">
+                    <p>
+                      <span className="font-medium">Storage:</span> Billed at ${(storageGb * 0.01).toFixed(2)}/month (${(0.01).toFixed(2)}/GB/month) regardless of instance state.
+                    </p>
+                    <p>
+                      <span className="font-medium">Compute:</span> Costs apply only when the instance is running.
+                    </p>
+                  </div>
+                </div>
               </Card>
 
               {/* Actions */}

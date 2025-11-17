@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/Layout/AppShell';
 import { AuthProvider } from './contexts/AuthContext';
 import { AuthGuard } from './components/Auth/AuthGuard';
+import { DemoWrapper } from './components/Demo/DemoWrapper';
 import Landing from './routes/Landing';
 import Login from './routes/Login';
 import Onboarding from './routes/Onboarding';
@@ -51,6 +52,14 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        
+        {/* Demo routes - no authentication required */}
+        <Route element={<DemoWrapper />}>
+          <Route path="/demo/dashboard" element={<Dashboard />} />
+          <Route path="/demo/create" element={<CreateInstance />} />
+          <Route path="/demo/usage" element={<Usage />} />
+          <Route path="/demo/classroom" element={<Classroom />} />
+        </Route>
         
         {/* Protected application routes with sidebar */}
         <Route element={<AuthGuard><AppShell showSidebar={true} /></AuthGuard>}>

@@ -14,5 +14,8 @@ export type { SelectProps, SelectOptionProps } from './Select'
 export { Badge, CountBadge } from './Badge'
 export type { BadgeProps, CountBadgeProps } from './Badge'
 
+export { DemoModeBadge } from './DemoModeBadge'
+export type { DemoModeBadgeProps } from './DemoModeBadge'
+
 export { Tabs, UnderlineTabs } from './Tabs'
 export type { TabsProps, TabItem, UnderlineTabsProps, UnderlineTabItem } from './Tabs'

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, HelpCircle, User, LogOut, Menu } from 'lucide-react';
 import { Badge } from '../ui/Badge';
+import { DemoModeBadge } from '../ui/DemoModeBadge';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDemo } from '../../contexts/DemoContext';
 
 interface TopNavProps {
   onMenuClick?: () => void;
@@ -13,6 +15,16 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { user, logout } = useAuth();
+  
+  // Check if we're in demo mode (will return undefined if not in DemoProvider)
+  let isDemo = false;
+  try {
+    const demoContext = useDemo();
+    isDemo = demoContext.isDemo;
+  } catch {
+    // Not in demo mode - useDemo throws if not in DemoProvider
+    isDemo = false;
+  }
 
   // Mock notifications
   const notifications = [
@@ -27,7 +39,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
     <nav className="fixed top-0 right-0 left-0 lg:left-60 z-40 bg-white border-b border-gray-200 h-16">
       <div className="px-4 sm:px-6 md:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left: Hamburger + Page Title */}
+          {/* Left: Hamburger + Page Title + Demo Badge */}
           <div className="flex items-center gap-3">
             {/* Hamburger Menu - visible on mobile/tablet */}
             {onMenuClick && (
@@ -46,7 +58,16 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
               {location.pathname === '/usage' && 'Usage & Billing'}
               {location.pathname === '/classroom' && 'Classroom Mode'}
               {location.pathname.startsWith('/instances/') && 'Instance Details'}
+              {location.pathname === '/demo/dashboard' && 'Instances'}
+              {location.pathname === '/demo/create' && 'Create Instance'}
+              {location.pathname === '/demo/usage' && 'Usage & Billing'}
+              {location.pathname === '/demo/classroom' && 'Classroom Mode'}
             </h1>
+            
+            {/* Demo Mode Badge - only shown in demo mode */}
+            {isDemo && (
+              <DemoModeBadge className="hidden md:inline-flex" />
+            )}
           </div>
 
           {/* Right: Actions */}

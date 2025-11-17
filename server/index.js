@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const instanceRoutes = require('./routes/instances');
+const billingRoutes = require('./routes/billing');
 const errorHandler = require('./middleware/errorHandler');
 const { initializeAdmin } = require('./services/firebaseAdmin');
 const dbService = require('./services/dbService');
@@ -59,6 +61,8 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/instances', instanceRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

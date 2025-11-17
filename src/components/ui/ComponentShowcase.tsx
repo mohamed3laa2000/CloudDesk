@@ -12,6 +12,7 @@ import { Card, CardHeader, CardBody, CardFooter } from './Card'
 import { Input, Textarea, Label, HelperText } from './Input'
 import { Select, SelectOption } from './Select'
 import { Badge, CountBadge } from './Badge'
+import { DemoModeBadge } from './DemoModeBadge'
 import { Tabs, UnderlineTabs } from './Tabs'
 
 export function ComponentShowcase() {
@@ -196,6 +197,13 @@ export function ComponentShowcase() {
                     <div className="h-10 w-10 rounded-full bg-gray-200" />
                     <CountBadge count={150} className="absolute -right-1 -top-1" />
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-700">Demo Mode Badge</p>
+                <div className="flex flex-wrap gap-2">
+                  <DemoModeBadge />
                 </div>
               </div>
             </div>

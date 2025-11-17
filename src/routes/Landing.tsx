@@ -80,12 +80,14 @@ export default function Landing() {
                     Get Started
                   </Button>
                 </Link>
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  View Demo
-                </Button>
+                <Link to="/demo/dashboard">
+                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                    View Demo
+                  </Button>
+                </Link>
               </div>
               <p className="text-sm text-gray-500 mt-6">
-                No credit card required • 7-day free trial
+                No credit card required • 7-day free trial • <span className="text-indigo-600 font-medium">Try the demo without signing up</span>
               </p>
             </div>
 

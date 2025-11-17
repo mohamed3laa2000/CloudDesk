@@ -58,6 +58,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Extract user data and JWT from response
       const { accessToken, user: userData } = response;
 
+      // Store JWT in localStorage for persistence across page refreshes
+      localStorage.setItem('accessToken', accessToken);
+
       // Store JWT in Authorization header for future requests
       apiService.setAuthToken(accessToken);
 
@@ -98,6 +101,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Sign out from Firebase
       await firebaseSignOut();
 
+      // Clear JWT from localStorage
+      localStorage.removeItem('accessToken');
+
       // Clear JWT from Authorization header
       apiService.clearAuthToken();
 
@@ -114,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Even if there's an error, ensure we clear state and redirect
       setUser(null);
       setIsAuthenticated(false);
+      localStorage.removeItem('accessToken');
       apiService.clearAuthToken();
       window.location.href = '/';
     } finally {
@@ -129,6 +136,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
 
     try {
+      // Try to restore JWT from localStorage
+      const storedToken = localStorage.getItem('accessToken');
+      
+      if (!storedToken) {
+        // No token stored, user is not authenticated
+        setUser(null);
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      // Set token in Authorization header
+      apiService.setAuthToken(storedToken);
+
       // Verify stored JWT with backend
       const response = await apiService.verifyToken();
 
@@ -144,6 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear state if token is invalid or expired
       setUser(null);
       setIsAuthenticated(false);
+      localStorage.removeItem('accessToken');
       apiService.clearAuthToken();
     } finally {
       setLoading(false);
@@ -158,6 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     apiService.setUnauthorizedCallback(() => {
       setUser(null);
       setIsAuthenticated(false);
+      localStorage.removeItem('accessToken');
       apiService.clearAuthToken();
     });
 

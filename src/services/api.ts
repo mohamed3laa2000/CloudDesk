@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
+import type { Instance, InstanceStatus, UsageSummary, UsageRow } from '../data/types';
 
 // Callback function for handling logout on 401 errors
 // This will be set by the Auth Context when it initializes
@@ -140,6 +141,77 @@ export const apiService = {
    */
   clearUnauthorizedCallback: () => {
     onUnauthorizedCallback = null;
+  },
+
+  // Instance API methods
+
+  /**
+   * Get all instances for the authenticated user
+   * @returns Promise with array of instances
+   */
+  getInstances: async (): Promise<Instance[]> => {
+    const response = await apiClient.get('/api/instances');
+    return response.data.instances;
+  },
+
+  /**
+   * Create a new instance
+   * @param instanceData - Instance configuration data
+   * @returns Promise with created instance
+   */
+  createInstance: async (instanceData: {
+    name: string;
+    imageId: string;
+    cpuCores: number;
+    ramGb: number;
+    storageGb: number;
+    gpu: string;
+    region: string;
+  }): Promise<Instance> => {
+    const response = await apiClient.post('/api/instances', instanceData);
+    return response.data.instance;
+  },
+
+  /**
+   * Update instance status
+   * @param id - Instance ID
+   * @param status - New status
+   * @returns Promise with updated instance
+   */
+  updateInstanceStatus: async (id: string, status: InstanceStatus): Promise<Instance> => {
+    const response = await apiClient.patch(`/api/instances/${id}/status`, { status });
+    return response.data.instance;
+  },
+
+  /**
+   * Delete an instance (soft delete)
+   * @param id - Instance ID
+   * @returns Promise with success message
+   */
+  deleteInstance: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.delete(`/api/instances/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Get a single instance by ID
+   * @param id - Instance ID
+   * @returns Promise with instance details
+   */
+  getInstance: async (id: string): Promise<Instance> => {
+    const response = await apiClient.get(`/api/instances/${id}`);
+    return response.data.instance;
+  },
+
+  // Billing API methods
+
+  /**
+   * Get usage summary for the authenticated user
+   * @returns Promise with usage summary including total hours, cost, and breakdown
+   */
+  getUsageSummary: async (): Promise<UsageSummary & { usageByInstance: UsageRow[] }> => {
+    const response = await apiClient.get('/api/billing/usage');
+    return response.data;
   },
 };
 

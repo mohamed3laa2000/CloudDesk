@@ -68,13 +68,19 @@ export interface UsageRow {
   instanceName: string;
   status: InstanceStatus;
   hours: number;
+  computeHourlyRate: number;
+  storageHourlyRate: number;
   avgHourlyRate: number;
+  computeCost: number;
+  storageCost: number;
   estimatedCost: number;
 }
 
 export interface UsageSummary {
   totalHours: number;
   totalCost: number;
+  totalComputeCost: number;
+  totalStorageCost: number;
   averageCostPerDesktop: number;
   activeDesktops: number;
 }
