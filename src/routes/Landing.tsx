@@ -40,12 +40,12 @@ export default function Landing() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link to="/dashboard" className="hidden sm:block">
+              <Link to="/login" className="hidden sm:block">
                 <Button variant="ghost" size="sm">
                   Sign In
                 </Button>
               </Link>
-              <Link to="/dashboard">
+              <Link to="/onboarding">
                 <Button variant="primary" size="sm">
                   Get Started
                 </Button>
@@ -75,9 +75,9 @@ export default function Landing() {
                 your team, and work from anywhere—without expensive hardware.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/dashboard">
+                <Link to="/onboarding">
                   <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                    Open Dashboard
+                    Get Started
                   </Button>
                 </Link>
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto">
@@ -300,9 +300,9 @@ export default function Landing() {
             Create your first cloud desktop in under 60 seconds. No credit card
             required.
           </p>
-          <Link to="/dashboard">
+          <Link to="/onboarding">
             <Button variant="primary" size="lg">
-              Open Dashboard
+              Get Started
             </Button>
           </Link>
           <p className="text-sm text-gray-500 mt-6">

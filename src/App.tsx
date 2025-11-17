@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AuthGuard } from './components/Auth/AuthGuard';
 import Landing from './routes/Landing';
 import Login from './routes/Login';
+import Onboarding from './routes/Onboarding';
 import { Product } from './routes/Product';
 import { Pricing } from './routes/Pricing';
 import { UseCases } from './routes/UseCases';
@@ -33,6 +34,7 @@ function App() {
         {/* Public pages without sidebar */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/product" element={<Product />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/use-cases" element={<UseCases />} />

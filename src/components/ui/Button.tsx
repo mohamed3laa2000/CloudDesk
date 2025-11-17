@@ -16,11 +16,11 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
+    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
 
   const variantStyles = {
     primary:
-      'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 disabled:hover:bg-indigo-600',
+      'bg-teal-600 text-white shadow-sm hover:bg-teal-700 disabled:hover:bg-teal-600',
     secondary:
       'bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 hover:border-gray-300 disabled:hover:bg-white disabled:hover:border-gray-200',
     ghost:
@@ -30,9 +30,9 @@ export function Button({
   }
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-base',
+    sm: 'px-3 py-1.5 text-sm min-h-[36px]',
+    md: 'px-4 py-2 text-base min-h-[44px]',
+    lg: 'px-6 py-3 text-base min-h-[44px]',
   }
 
   return (

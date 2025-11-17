@@ -30,3 +30,6 @@ server/.env
 *.njsproj
 *.sln
 *.sw?
+
+# Kiro IDE
+.kiro
