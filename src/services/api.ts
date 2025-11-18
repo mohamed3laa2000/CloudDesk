@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import type { Instance, InstanceStatus, UsageSummary, UsageRow } from '../data/types';
+import type { UserPreferences, ProfileUpdateData } from '../types/preferences';
 
 // Callback function for handling logout on 401 errors
 // This will be set by the Auth Context when it initializes
@@ -212,6 +213,37 @@ export const apiService = {
   getUsageSummary: async (): Promise<UsageSummary & { usageByInstance: UsageRow[] }> => {
     const response = await apiClient.get('/api/billing/usage');
     return response.data;
+  },
+
+  // Preferences API methods
+
+  /**
+   * Get user preferences
+   * @returns Promise with user preferences
+   */
+  getUserPreferences: async (): Promise<UserPreferences> => {
+    const response = await apiClient.get('/api/users/preferences');
+    return response.data.preferences;
+  },
+
+  /**
+   * Update user preferences
+   * @param preferences - Partial preferences to update
+   * @returns Promise with updated preferences
+   */
+  updateUserPreferences: async (preferences: Partial<UserPreferences>): Promise<UserPreferences> => {
+    const response = await apiClient.put('/api/users/preferences', preferences);
+    return response.data.preferences;
+  },
+
+  /**
+   * Update user profile
+   * @param data - Profile data to update
+   * @returns Promise with updated user data
+   */
+  updateUserProfile: async (data: ProfileUpdateData): Promise<{ email: string; name: string }> => {
+    const response = await apiClient.put('/api/users/profile', data);
+    return response.data.user;
   },
 };
 

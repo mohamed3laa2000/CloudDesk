@@ -20,6 +20,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   login: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 /**
@@ -80,6 +81,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Update user data in state
+   * @param userData - Partial user data to update
+   */
+  const updateUser = (userData: Partial<User>): void => {
+    setUser((prevUser) => {
+      if (!prevUser) return null;
+      return { ...prevUser, ...userData };
+    });
   };
 
   /**
@@ -200,6 +212,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

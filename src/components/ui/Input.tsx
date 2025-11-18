@@ -7,11 +7,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ error = false, className = '', disabled, ...props }: InputProps) {
   const baseStyles =
-    'w-full h-10 px-3 py-2 text-base font-normal text-gray-900 bg-white border rounded-lg transition-colors placeholder:text-gray-400 focus:outline-none disabled:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed'
+    'w-full h-10 px-3 py-2 text-base font-normal text-[var(--color-text-primary)] bg-[var(--color-background)] border rounded-lg transition-colors placeholder:text-[var(--color-text-secondary)] focus:outline-none disabled:bg-[var(--color-surface)] disabled:border-[var(--color-border)] disabled:text-[var(--color-text-secondary)] disabled:cursor-not-allowed'
 
   const stateStyles = error
-    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-0'
-    : 'border-gray-200 hover:border-gray-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 focus:ring-offset-0'
+    ? 'border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-0'
+    : 'border-[var(--color-border)] hover:border-[var(--color-text-secondary)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-0'
 
   return (
     <input
@@ -36,11 +36,11 @@ export function Textarea({
   ...props
 }: TextareaProps) {
   const baseStyles =
-    'w-full px-3 py-2 text-base font-normal text-gray-900 bg-white border rounded-lg transition-colors placeholder:text-gray-400 focus:outline-none resize-y disabled:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed'
+    'w-full px-3 py-2 text-base font-normal text-[var(--color-text-primary)] bg-[var(--color-background)] border rounded-lg transition-colors placeholder:text-[var(--color-text-secondary)] focus:outline-none resize-y disabled:bg-[var(--color-surface)] disabled:border-[var(--color-border)] disabled:text-[var(--color-text-secondary)] disabled:cursor-not-allowed'
 
   const stateStyles = error
-    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-0'
-    : 'border-gray-200 hover:border-gray-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 focus:ring-offset-0'
+    ? 'border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-0'
+    : 'border-[var(--color-border)] hover:border-[var(--color-text-secondary)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-0'
 
   return (
     <textarea
@@ -61,9 +61,9 @@ export interface LabelProps {
 
 export function Label({ htmlFor, children, required = false, className = '' }: LabelProps) {
   return (
-    <label htmlFor={htmlFor} className={`block text-sm font-medium text-gray-900 ${className}`}>
+    <label htmlFor={htmlFor} className={`block text-sm font-medium text-[var(--color-text-primary)] ${className}`}>
       {children}
-      {required && <span className="ml-1 text-red-600">*</span>}
+      {required && <span className="ml-1 text-[var(--color-error)]">*</span>}
     </label>
   )
 }
@@ -75,6 +75,6 @@ export interface HelperTextProps {
 }
 
 export function HelperText({ children, error = false, className = '' }: HelperTextProps) {
-  const colorClass = error ? 'text-red-600' : 'text-gray-500'
+  const colorClass = error ? 'text-[var(--color-error)]' : 'text-[var(--color-text-secondary)]'
   return <p className={`mt-1 text-sm ${colorClass} ${className}`}>{children}</p>
 }

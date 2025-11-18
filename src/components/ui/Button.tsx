@@ -16,17 +16,17 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
+    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 disabled:opacity-60 disabled:cursor-not-allowed'
 
   const variantStyles = {
     primary:
-      'bg-teal-600 text-white shadow-sm hover:bg-teal-700 disabled:hover:bg-teal-600',
+      'text-white shadow-sm disabled:hover:bg-[var(--color-accent)] focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2',
     secondary:
-      'bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 hover:border-gray-300 disabled:hover:bg-white disabled:hover:border-gray-200',
+      'bg-[var(--color-background)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] disabled:hover:bg-[var(--color-background)] focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 border border-[var(--color-border)] hover:border-[var(--color-text-secondary)]',
     ghost:
-      'bg-transparent text-gray-900 hover:bg-gray-50 disabled:hover:bg-transparent',
+      'bg-transparent text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] disabled:hover:bg-transparent focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2',
     destructive:
-      'bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-600 disabled:hover:bg-red-600',
+      'bg-[var(--color-error)] text-white shadow-sm hover:opacity-90 focus-visible:ring-[var(--color-error)] focus-visible:ring-offset-2 disabled:hover:opacity-60',
   }
 
   const sizeStyles = {
@@ -35,9 +35,19 @@ export function Button({
     lg: 'px-6 py-3 text-base min-h-[44px]',
   }
 
+  // Apply accent color background for primary variant
+  const primaryBgStyle = variant === 'primary' ? {
+    backgroundColor: 'var(--color-accent)',
+  } : undefined
+
+  const primaryHoverStyle = variant === 'primary' ? {
+    '--tw-hover-bg': 'var(--color-accent-hover)',
+  } as React.CSSProperties : undefined
+
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${variant === 'primary' ? 'hover:bg-[var(--color-accent-hover)]' : ''} ${className}`}
+      style={{ ...primaryBgStyle, ...primaryHoverStyle }}
       disabled={disabled}
       {...props}
     >

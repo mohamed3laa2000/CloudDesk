@@ -541,6 +541,149 @@ const calculateUsageSummary = async (email) => {
 };
 
 /**
+ * Get user preferences
+ * @param {string} email - User email
+ * @returns {Promise<object|null>} - User preferences object or null if not found
+ */
+const getUserPreferences = async (email) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        user_email,
+        theme,
+        accent_color,
+        created_at,
+        updated_at
+      FROM user_preferences 
+      WHERE user_email = $1
+    `;
+
+    const result = await pool.query(query, [email]);
+    
+    // Return null if preferences not found
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    // Transform snake_case to camelCase
+    const row = result.rows[0];
+    return {
+      userEmail: row.user_email,
+      theme: row.theme,
+      accentColor: row.accent_color,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  } catch (error) {
+    console.error('Error getting user preferences:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Update user preferences (creates if doesn't exist)
+ * @param {string} email - User email
+ * @param {object} preferencesData - Preferences to update
+ * @param {string} [preferencesData.theme] - Theme preference (light, dark, system)
+ * @param {string} [preferencesData.accentColor] - Accent color hex code
+ * @returns {Promise<object>} - Updated preferences object
+ */
+const updateUserPreferences = async (email, preferencesData) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Use INSERT ... ON CONFLICT to upsert preferences
+    // This creates a new record if none exists, or updates if it does
+    const query = `
+      INSERT INTO user_preferences (user_email, theme, accent_color, created_at, updated_at)
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_email) 
+      DO UPDATE SET
+        theme = COALESCE($2, user_preferences.theme),
+        accent_color = COALESCE($3, user_preferences.accent_color),
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING 
+        user_email,
+        theme,
+        accent_color,
+        created_at,
+        updated_at
+    `;
+
+    const values = [
+      email,
+      preferencesData.theme || null,
+      preferencesData.accentColor || null
+    ];
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Failed to update user preferences');
+    }
+
+    // Transform snake_case to camelCase
+    const row = result.rows[0];
+    return {
+      userEmail: row.user_email,
+      theme: row.theme,
+      accentColor: row.accent_color,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  } catch (error) {
+    console.error('Error updating user preferences:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Update user profile information
+ * @param {string} email - User email
+ * @param {object} profileData - Profile data to update
+ * @param {string} [profileData.name] - User's display name
+ * @returns {Promise<object>} - Updated user object
+ */
+const updateUserProfile = async (email, profileData) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Validate that name is provided and not empty
+    if (!profileData.name || profileData.name.trim() === '') {
+      throw new Error('Name cannot be empty');
+    }
+
+    const query = `
+      UPDATE approved_users 
+      SET 
+        name = $1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE email = $2
+      RETURNING email, name, updated_at
+    `;
+
+    const result = await pool.query(query, [profileData.name.trim(), email]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`User with email ${email} not found in approved_users table`);
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error updating user profile:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
  * Disconnect from the database and close the connection pool
  */
 const disconnect = async () => {
@@ -566,5 +709,8 @@ module.exports = {
   deleteInstance,
   getInstanceById,
   calculateUsageSummary,
+  getUserPreferences,
+  updateUserPreferences,
+  updateUserProfile,
   disconnect
 };

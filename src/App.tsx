@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/Layout/AppShell';
 import { AuthProvider } from './contexts/AuthContext';
+import { PreferencesProvider } from './contexts/PreferencesContext';
 import { AuthGuard } from './components/Auth/AuthGuard';
 import { DemoWrapper } from './components/Demo/DemoWrapper';
 import Landing from './routes/Landing';
@@ -27,11 +28,13 @@ import CreateInstance from './routes/CreateInstance';
 import InstanceDetail from './routes/InstanceDetail';
 import Usage from './routes/Usage';
 import Classroom from './routes/Classroom';
+import Settings from './routes/Settings';
 
 function App() {
   return (
     <AuthProvider>
-      <Routes>
+      <PreferencesProvider>
+        <Routes>
         {/* Public pages without sidebar */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -68,11 +71,13 @@ function App() {
           <Route path="/instances/:id" element={<InstanceDetail />} />
           <Route path="/usage" element={<Usage />} />
           <Route path="/classroom" element={<Classroom />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }
