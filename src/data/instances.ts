@@ -135,6 +135,25 @@ export const INITIAL_INSTANCES: Instance[] = [
     createdAt: '2025-01-11T07:30:00Z',
     updatedAt: '2025-01-19T16:00:00Z',
   },
+  {
+    id: 'inst-011',
+    name: 'GCP Windows Server',
+    imageId: 'windows-general',
+    status: 'RUNNING',
+    cpuCores: 4,
+    ramGb: 16,
+    storageGb: 100,
+    gpu: 'NONE',
+    region: 'SINGAPORE',
+    createdAt: '2025-01-19T10:00:00Z',
+    updatedAt: '2025-01-20T14:30:00Z',
+    // GCP metadata - this instance is managed by GCP
+    gcpInstanceId: 'clouddesk-inst-011',
+    gcpZone: 'asia-southeast1-a',
+    gcpMachineType: 'n1-standard-4',
+    gcpProjectId: 'clouddesk-demo-project',
+    gcpExternalIp: '34.87.123.45',
+  },
 ];
 
 /**

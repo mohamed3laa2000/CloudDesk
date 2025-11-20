@@ -10,6 +10,7 @@ import {
   Pause,
   Trash2,
   ExternalLink,
+  Cloud,
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -98,9 +99,12 @@ export default function Dashboard() {
       
       // Refresh timestamp after update
       setLastUpdated(new Date());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update instance status:', error);
-      alert('Failed to update instance status. Please try again.');
+      
+      // Use the error message from the API service (which handles GCP errors)
+      const errorMessage = error?.message || 'Failed to update instance status. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -114,9 +118,12 @@ export default function Dashboard() {
       try {
         await deleteInstance(id);
         setLastUpdated(new Date());
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to delete instance:', error);
-        alert('Failed to delete instance. Please try again.');
+        
+        // Use the error message from the API service (which handles GCP errors)
+        const errorMessage = error?.message || 'Failed to delete instance. Please try again.';
+        alert(errorMessage);
       }
     }
   };
@@ -353,7 +360,7 @@ export default function Dashboard() {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                   {/* Left: Name, Status, Resources */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
                       <LiveIndicator 
                         status={instance.status.toLowerCase() as any}
                         size="sm"
@@ -364,6 +371,12 @@ export default function Dashboard() {
                       <Badge variant={getStatusVariant(instance.status)}>
                         {instance.status}
                       </Badge>
+                      {instance.gcpInstanceId && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          <Cloud className="w-3 h-3 mr-0.5" />
+                          GCP
+                        </span>
+                      )}
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600">

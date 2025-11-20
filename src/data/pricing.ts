@@ -3,23 +3,24 @@ import type { PricingConfig, Instance, GpuType } from './types';
 /**
  * Pricing configuration for CloudDesk EDU
  * All prices are in USD per hour
+ * Based on GCP Compute Engine pricing (approximate)
  */
 export const PRICING_CONFIG: PricingConfig = {
-  // Base compute costs
-  basePerCpuPerHour: 0.04, // $0.04 per vCPU per hour
-  basePerRamGbPerHour: 0.01, // $0.01 per GB RAM per hour
-  basePerStorageGbPerHour: 0.001, // $0.001 per GB storage per hour
+  // Base compute costs (GCP-based pricing)
+  basePerCpuPerHour: 0.0475, // $0.0475 per vCPU per hour (n1-standard pricing)
+  basePerRamGbPerHour: 0.0065, // $0.0065 per GB RAM per hour (n1-standard pricing)
+  basePerStorageGbPerHour: 0.00014, // $0.00014 per GB storage per hour (~$0.10/GB/month for persistent disk)
 
-  // GPU additional costs (per hour)
+  // GPU additional costs (per hour) - GCP pricing
   gpuExtraPerHour: {
     NONE: 0.0,
-    T4: 0.50,           // Entry-level ML/inference
-    V100: 2.50,         // Professional deep learning
+    T4: 0.35,           // Entry-level ML/inference (GCP T4 pricing)
+    V100: 2.48,         // Professional deep learning (GCP V100 pricing)
     A10: 1.80,          // Professional graphics/AI
-    A100: 4.00,         // Enterprise AI training
-    H100: 8.00,         // Next-gen enterprise AI
-    RTX_4090: 2.80,     // Workstation rendering
-    RTX_A6000: 3.20,    // Professional visualization
+    A100: 3.67,         // Enterprise AI training (GCP A100 pricing)
+    H100: 8.00,         // Next-gen enterprise AI (estimated)
+    RTX_4090: 2.80,     // Workstation rendering (estimated)
+    RTX_A6000: 3.20,    // Professional visualization (estimated)
   },
 
   // Markup rate (1.0 = no markup, 1.1 = 10% markup)

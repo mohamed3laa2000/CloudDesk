@@ -349,9 +349,225 @@ DATABASE_URL=postgresql://username:password@host:5432/database
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+
+# GCP Compute Engine Integration (Optional)
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_ENABLED=false  # Set to true to enable real VM provisioning
 ```
 
 **Important**: Never commit `.env` files to version control. They are already included in `.gitignore`.
+
+### GCP Compute Engine Integration (Optional)
+
+CloudDesk EDU supports real Google Cloud Platform VM provisioning for production deployments. When enabled, the system provisions actual Windows-based virtual machines in GCP instead of using demo mode.
+
+#### Prerequisites
+
+1. **Google Cloud Platform Account**
+   - Active GCP project with billing enabled
+   - gcloud SDK installed on the server
+   - Service account with appropriate permissions
+
+2. **Required GCP APIs**
+   
+   Enable the following APIs in your GCP project:
+   ```bash
+   gcloud services enable compute.googleapis.com
+   gcloud services enable cloudresourcemanager.googleapis.com
+   ```
+
+3. **Install gcloud SDK**
+   
+   Follow the [official installation guide](https://cloud.google.com/sdk/docs/install) for your operating system:
+   
+   ```bash
+   # Verify installation
+   gcloud --version
+   
+   # Authenticate with service account
+   gcloud auth activate-service-account --key-file=/path/to/service-account-key.json
+   
+   # Set default project
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+
+#### Required GCP Permissions
+
+Create a service account with the following IAM roles:
+
+**Compute Engine Permissions:**
+- `compute.instances.create` - Create VM instances
+- `compute.instances.delete` - Delete VM instances
+- `compute.instances.get` - Query instance status and details
+- `compute.instances.list` - List instances in project
+- `compute.instances.start` - Start stopped instances
+- `compute.instances.stop` - Stop running instances
+- `compute.instances.setMetadata` - Required for Windows password reset
+- `compute.disks.create` - Create boot disks for instances
+- `compute.images.useReadOnly` - Use Windows Server images
+- `compute.zones.get` - Access zone information
+
+**Recommended IAM Role:**
+
+The easiest approach is to assign the **Compute Instance Admin (v1)** role (`roles/compute.instanceAdmin.v1`) to your service account:
+
+```bash
+# Create service account
+gcloud iam service-accounts create clouddesk-compute \
+  --display-name="CloudDesk Compute Service Account"
+
+# Grant Compute Instance Admin role
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:clouddesk-compute@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/compute.instanceAdmin.v1"
+
+# Create and download service account key
+gcloud iam service-accounts keys create ~/clouddesk-sa-key.json \
+  --iam-account=clouddesk-compute@YOUR_PROJECT_ID.iam.gserviceaccount.com
+```
+
+**Custom Role (Advanced):**
+
+For fine-grained control, create a custom role with only the required permissions:
+
+```bash
+# Create custom role
+gcloud iam roles create cloudDeskComputeRole \
+  --project=YOUR_PROJECT_ID \
+  --title="CloudDesk Compute Role" \
+  --description="Custom role for CloudDesk VM management" \
+  --permissions=compute.instances.create,compute.instances.delete,compute.instances.get,compute.instances.list,compute.instances.start,compute.instances.stop,compute.instances.setMetadata,compute.disks.create,compute.images.useReadOnly,compute.zones.get
+
+# Assign custom role to service account
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:clouddesk-compute@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+  --role="projects/YOUR_PROJECT_ID/roles/cloudDeskComputeRole"
+```
+
+#### Configuration Steps
+
+1. **Set Environment Variables**
+   
+   Update `server/.env`:
+   ```env
+   GCP_PROJECT_ID=your-gcp-project-id
+   GCP_ENABLED=true
+   ```
+
+2. **Authenticate gcloud SDK**
+   
+   On your server, authenticate using the service account:
+   ```bash
+   gcloud auth activate-service-account \
+     --key-file=/path/to/clouddesk-sa-key.json
+   ```
+
+3. **Verify Configuration**
+   
+   Test that gcloud is properly configured:
+   ```bash
+   # List available zones
+   gcloud compute zones list
+   
+   # Verify authentication
+   gcloud auth list
+   
+   # Check project configuration
+   gcloud config get-value project
+   ```
+
+4. **Start the Server**
+   
+   The server will automatically detect GCP configuration on startup:
+   ```bash
+   cd server
+   npm start
+   ```
+   
+   Look for the log message:
+   ```
+   ✓ GCP Compute Engine integration enabled
+   ✓ Project: your-gcp-project-id
+   ```
+
+#### Supported Regions
+
+CloudDesk currently supports VM provisioning in two GCP regions:
+
+| CloudDesk Region | GCP Region | GCP Zone | Location |
+|-----------------|------------|----------|----------|
+| SINGAPORE | asia-southeast1 | asia-southeast1-a | Singapore |
+| IOWA | us-central1 | us-central1-a | Iowa, USA |
+
+#### Features
+
+When GCP integration is enabled:
+
+- ✅ **Real VM Provisioning**: Creates actual Windows Server VMs in GCP
+- ✅ **Windows Password Reset**: Generate and retrieve Windows administrator passwords
+- ✅ **Instance Lifecycle Management**: Start, stop, and delete VMs
+- ✅ **Status Synchronization**: Real-time status updates from GCP
+- ✅ **External IP Assignment**: Automatic public IP allocation
+- ✅ **Error Handling**: Comprehensive error messages for GCP operations
+- ✅ **Audit Logging**: All GCP operations logged with context
+
+#### Demo Mode vs Production Mode
+
+**Demo Mode** (`GCP_ENABLED=false`):
+- Uses database-only instance management
+- No actual VMs provisioned
+- Instant operations (no waiting)
+- No GCP costs
+- Perfect for development and testing
+
+**Production Mode** (`GCP_ENABLED=true`):
+- Provisions real Windows Server VMs in GCP
+- 5-10 minute provisioning time
+- Actual compute costs apply
+- Full Windows desktop functionality
+- Requires GCP credentials
+
+#### Troubleshooting
+
+**"gcloud command not found"**
+- Ensure gcloud SDK is installed and in your PATH
+- Restart your terminal after installation
+
+**"Authentication failed"**
+- Verify service account key is valid
+- Check that service account has required permissions
+- Re-authenticate: `gcloud auth activate-service-account --key-file=...`
+
+**"Quota exceeded"**
+- Check your GCP project quotas in the console
+- Request quota increases if needed
+- Try a different region
+
+**"Permission denied"**
+- Verify service account has Compute Instance Admin role
+- Check that required APIs are enabled
+- Review IAM policy bindings
+
+**"Instance creation timeout"**
+- GCP VM provisioning can take 5-10 minutes
+- Check GCP Console for instance status
+- Review server logs for detailed error messages
+
+#### Cost Considerations
+
+GCP charges apply for:
+- **Compute**: Per-second billing for VM instances
+- **Storage**: Boot disk storage (minimum 50GB for Windows)
+- **Network**: Egress traffic (ingress is free)
+- **Licensing**: Windows Server license included in machine cost
+
+Estimate costs using the [GCP Pricing Calculator](https://cloud.google.com/products/calculator).
+
+**Cost Optimization Tips:**
+- Stop instances when not in use (storage costs only)
+- Use preemptible VMs for non-critical workloads (not yet supported)
+- Choose appropriate machine types (don't over-provision)
+- Monitor usage with CloudDesk analytics
 
 ### Tailwind Configuration
 
@@ -411,6 +627,12 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[FAQ](/docs/faq)** - 28 frequently asked questions across 7 categories
 - **[Getting Started](/docs/getting-started)** - Quick start guide for new users
 - **[Quick Reference](docs/QUICK-REFERENCE.md)** - Developer quick reference guide
+
+### GCP Integration Documentation
+- **[GCP Integration Summary](docs/GCP-INTEGRATION-SUMMARY.md)** - Overview of GCP integration features and documentation
+- **[GCP Setup Guide](docs/gcp-setup-guide.md)** - Complete setup instructions for GCP Compute Engine
+- **[GCP Permissions Reference](docs/gcp-permissions-reference.md)** - Detailed IAM permissions documentation
+- **[GCP Error Handling](docs/gcp-error-handling-implementation.md)** - Error handling implementation details
 
 ### Page Specifications
 

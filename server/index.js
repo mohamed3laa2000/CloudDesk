@@ -11,6 +11,28 @@ const errorHandler = require('./middleware/errorHandler');
 const { initializeAdmin } = require('./services/firebaseAdmin');
 const dbService = require('./services/dbService');
 
+// Validate GCP configuration
+function validateGcpConfiguration() {
+  const gcpEnabled = process.env.GCP_ENABLED === 'true';
+  const gcpProjectId = process.env.GCP_PROJECT_ID;
+
+  if (gcpEnabled) {
+    if (!gcpProjectId || gcpProjectId === 'your-gcp-project-id') {
+      console.warn('⚠️  WARNING: GCP_ENABLED is true but GCP_PROJECT_ID is not configured.');
+      console.warn('⚠️  Falling back to demo mode. Set GCP_PROJECT_ID in .env to enable real VM provisioning.');
+      process.env.GCP_ENABLED = 'false';
+      return false;
+    }
+    console.log('✓ GCP integration enabled');
+    console.log(`✓ GCP Project ID: ${gcpProjectId}`);
+    return true;
+  } else {
+    console.log('ℹ️  GCP integration disabled - running in demo mode');
+    console.log('ℹ️  Set GCP_ENABLED=true and configure GCP_PROJECT_ID to enable real VM provisioning');
+    return false;
+  }
+}
+
 // Initialize Firebase Admin SDK
 try {
   initializeAdmin();
@@ -29,32 +51,16 @@ try {
   }
 })();
 
+// Validate GCP configuration on startup
+validateGcpConfiguration();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-// Allow multiple origins for local and production
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://cloud-desk.gabrielseto.dev'
-];
-
-// Add FRONTEND_URL from env if it exists and is different
-if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
-}
-
+// Allow all origins for development
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins
   credentials: true
 }));
 app.use(express.json());
@@ -68,10 +74,13 @@ app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {
+  const gcpEnabled = process.env.GCP_ENABLED === 'true';
   res.json({ 
     status: 'ok', 
     message: 'Server is running',
-    database: 'connected'
+    database: 'connected',
+    gcpEnabled: gcpEnabled,
+    mode: gcpEnabled ? 'production' : 'demo'
   });
 });
 

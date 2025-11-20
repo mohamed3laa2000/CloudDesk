@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
+import { ErrorAlert } from '../components/ui/ErrorAlert';
 import { useInstancesDemo } from '../hooks/useInstancesDemo';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useDemo } from '../contexts/DemoContext';
@@ -21,15 +22,8 @@ const PRESET_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 const REGIONS: { value: Region; label: string }[] = [
-  { value: 'US_EAST_1', label: 'US East (N. Virginia)' },
-  { value: 'US_EAST_2', label: 'US East (Ohio)' },
-  { value: 'US_WEST_1', label: 'US West (N. California)' },
-  { value: 'US_WEST_2', label: 'US West (Oregon)' },
-  { value: 'EU_WEST_1', label: 'EU West (Ireland)' },
-  { value: 'EU_WEST_2', label: 'EU West (London)' },
-  { value: 'EU_CENTRAL_1', label: 'EU Central (Frankfurt)' },
-  { value: 'ASIA_PACIFIC_1', label: 'Asia Pacific (Singapore)' },
-  { value: 'ASIA_PACIFIC_2', label: 'Asia Pacific (Tokyo)' },
+  { value: 'SINGAPORE', label: 'Singapore' },
+  { value: 'IOWA', label: 'Iowa (US)' },
 ];
 
 const GPU_OPTIONS: { value: GpuType; label: string; description: string; priceImpact: string }[] = [
@@ -60,7 +54,7 @@ export default function CreateInstance() {
   // Form state
   const [selectedPresetId, setSelectedPresetId] = useState<string>('dev-engineering');
   const [instanceName, setInstanceName] = useState('');
-  const [region, setRegion] = useState<Region>('US_EAST_1');
+  const [region, setRegion] = useState<Region>('SINGAPORE');
   const [cpuCores, setCpuCores] = useState(4);
   const [ramGb, setRamGb] = useState(8);
   const [storageGb, setStorageGb] = useState(50);
@@ -97,6 +91,9 @@ export default function CreateInstance() {
 
     setSelectedPresetId(presetId);
     
+    // Check if this is a Windows preset
+    const isWindows = preset.osName.toLowerCase().includes('windows');
+    
     // Pre-fill form with preset recommendations if fields are at default values
     if (cpuCores === 4 || cpuCores === 2) {
       setCpuCores(preset.recommendedCpu);
@@ -107,6 +104,12 @@ export default function CreateInstance() {
     if (storageGb === 50 || storageGb === 30) {
       setStorageGb(preset.recommendedStorageGb);
     }
+    
+    // Ensure Windows presets meet minimum storage requirement
+    if (isWindows && storageGb < 50) {
+      setStorageGb(Math.max(50, preset.recommendedStorageGb));
+    }
+    
     if (gpu === 'NONE' && preset.supportsGpu) {
       setGpu('T4');
     }
@@ -134,6 +137,15 @@ export default function CreateInstance() {
     };
   }, [selectedPresetId, cpuCores, ramGb, storageGb, gpu, region]);
 
+  // Check if selected preset is Windows-based
+  const isWindowsPreset = useMemo(() => {
+    const preset = IMAGE_PRESETS.find((p) => p.id === selectedPresetId);
+    return preset?.osName.toLowerCase().includes('windows') || false;
+  }, [selectedPresetId]);
+
+  // Minimum storage requirement for Windows
+  const minStorageGb = isWindowsPreset ? 50 : 20;
+
   // Validation
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -154,8 +166,13 @@ export default function CreateInstance() {
       newErrors.ramGb = 'RAM must be between 2 and 64 GB';
     }
 
-    if (storageGb < 20 || storageGb > 500) {
-      newErrors.storageGb = 'Storage must be between 20 and 500 GB';
+    // Windows-specific storage validation
+    if (storageGb < minStorageGb || storageGb > 500) {
+      if (isWindowsPreset) {
+        newErrors.storageGb = `Windows instances require at least ${minStorageGb} GB storage`;
+      } else {
+        newErrors.storageGb = 'Storage must be between 20 and 500 GB';
+      }
     }
 
     setErrors(newErrors);
@@ -171,6 +188,7 @@ export default function CreateInstance() {
     }
 
     setIsSubmitting(true);
+    setErrors({}); // Clear previous errors
 
     try {
       await createInstance({
@@ -185,9 +203,15 @@ export default function CreateInstance() {
 
       // Navigate to dashboard
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create instance:', error);
-      setErrors({ submit: 'Failed to create instance. Please try again.' });
+      
+      // Use the error message from the API service (which handles GCP errors)
+      const errorMessage = error?.message || 'Failed to create instance. Please try again.';
+      setErrors({ submit: errorMessage });
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
@@ -233,6 +257,16 @@ export default function CreateInstance() {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Error Alert - Show at top if submission fails */}
+        {errors.submit && (
+          <ErrorAlert
+            title="Failed to Create Instance"
+            message={errors.submit}
+            onDismiss={() => setErrors({})}
+            className="mb-4 sm:mb-6"
+          />
+        )}
+        
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
           {/* Left Column - Configuration Form */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -380,7 +414,7 @@ export default function CreateInstance() {
                   <input
                     id="storageGb"
                     type="range"
-                    min="20"
+                    min={minStorageGb}
                     max="500"
                     step="10"
                     value={storageGb}
@@ -388,10 +422,18 @@ export default function CreateInstance() {
                     className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-indigo-600"
                   />
                   <div className="mt-1.5 flex justify-between text-xs text-gray-400">
-                    <span>20</span>
+                    <span>{minStorageGb}</span>
                     <span>250</span>
                     <span>500</span>
                   </div>
+                  {isWindowsPreset && (
+                    <p className="mt-1.5 text-xs text-amber-600">
+                      Windows requires minimum {minStorageGb} GB storage
+                    </p>
+                  )}
+                  {errors.storageGb && (
+                    <p className="mt-1 text-xs text-red-600">{errors.storageGb}</p>
+                  )}
                 </div>
               </div>
             </Card>
@@ -430,6 +472,19 @@ export default function CreateInstance() {
                   <p className="text-xs text-gray-500 mb-1">Preset</p>
                   <p className="text-sm font-medium text-gray-900">{selectedPreset?.name}</p>
                   <p className="text-xs text-gray-600 mt-0.5">{selectedPreset?.osName}</p>
+                  
+                  {/* Windows-specific information */}
+                  {isWindowsPreset && (
+                    <div className="mt-3 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs font-semibold text-blue-900 mb-1">Windows Server</p>
+                      <p className="text-xs text-blue-800">
+                        Provisioning time: 5-10 minutes
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Includes Windows Server 2025 with remote desktop access
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Name & Region */}
@@ -495,11 +550,16 @@ export default function CreateInstance() {
                   <h4 className="text-xs font-semibold text-blue-900 mb-1.5">Billing Information</h4>
                   <div className="space-y-1.5 text-xs text-blue-800">
                     <p>
-                      <span className="font-medium">Storage:</span> Billed at ${(storageGb * 0.01).toFixed(2)}/month (${(0.01).toFixed(2)}/GB/month) regardless of instance state.
+                      <span className="font-medium">Storage:</span> Billed at ${(storageGb * 0.10).toFixed(2)}/month ($0.10/GB/month) regardless of instance state.
                     </p>
                     <p>
                       <span className="font-medium">Compute:</span> Costs apply only when the instance is running.
                     </p>
+                    {isWindowsPreset && (
+                      <p>
+                        <span className="font-medium">Windows:</span> Includes Windows Server license in compute cost.
+                      </p>
+                    )}
                   </div>
                 </div>
               </Card>

@@ -1,0 +1,36 @@
+# Listen on port 80 only (HTTP, no TLS)
+# Cloudflare will handle HTTPS termination
+:80 {
+    # Reverse proxy API requests to backend (must come BEFORE file_server)
+    handle /api/* {
+        reverse_proxy localhost:3001
+    }
+    
+    # Serve static files from the dist folder
+    handle {
+        root * dist
+        try_files {path} /index.html
+        file_server
+    }
+    
+    # Enable gzip compression
+    encode gzip
+    
+    # Security headers
+    header {
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME sniffing
+        X-Content-Type-Options "nosniff"
+        # Enable XSS protection
+        X-XSS-Protection "1; mode=block"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+    
+    # Logging
+    log {
+        output file logs/access.log
+        format json
+    }
+}

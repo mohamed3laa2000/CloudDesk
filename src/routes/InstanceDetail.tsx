@@ -21,10 +21,17 @@ import {
   Globe,
   Monitor,
   Calendar,
-  X
+  X,
+  Key,
+  Cloud,
+  MapPin,
+  Server,
+  Network
 } from 'lucide-react';
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { WindowsPasswordResetModal } from '../components/Windows/WindowsPasswordResetModal';
+import { apiService } from '../services/api';
 
 export default function InstanceDetail() {
   const { id } = useParams();
@@ -32,6 +39,7 @@ export default function InstanceDetail() {
   const { instances, updateStatus, deleteInstance } = useInstancesDemo();
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
@@ -55,11 +63,20 @@ export default function InstanceDetail() {
     if (!instance) return;
     setIsActionLoading(true);
     
-    const newStatus = instance.status === 'RUNNING' ? 'STOPPED' : 'RUNNING';
-    await updateStatus(instance.id, newStatus);
-    
-    setIsActionLoading(false);
-    showToast(newStatus === 'RUNNING' ? 'Desktop started successfully' : 'Desktop stopped');
+    try {
+      const newStatus = instance.status === 'RUNNING' ? 'STOPPED' : 'RUNNING';
+      await updateStatus(instance.id, newStatus);
+      
+      showToast(newStatus === 'RUNNING' ? 'Desktop started successfully' : 'Desktop stopped');
+    } catch (error: any) {
+      console.error('Failed to update instance status:', error);
+      
+      // Use the error message from the API service (which handles GCP errors)
+      const errorMessage = error?.message || 'Failed to update instance status. Please try again.';
+      showToast(errorMessage);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   // Handle delete
@@ -67,17 +84,49 @@ export default function InstanceDetail() {
     if (!instance) return;
     setIsActionLoading(true);
     
-    await deleteInstance(instance.id);
-    setShowDeleteModal(false);
-    showToast('Desktop deleted successfully');
-    
-    setTimeout(() => navigate('/dashboard'), 500);
+    try {
+      await deleteInstance(instance.id);
+      setShowDeleteModal(false);
+      showToast('Desktop deleted successfully');
+      
+      setTimeout(() => navigate('/dashboard'), 500);
+    } catch (error: any) {
+      console.error('Failed to delete instance:', error);
+      
+      // Use the error message from the API service (which handles GCP errors)
+      const errorMessage = error?.message || 'Failed to delete instance. Please try again.';
+      showToast(errorMessage);
+      setShowDeleteModal(false);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   // Handle backup
   const handleBackup = () => {
     showToast('Backup created (demo)');
   };
+
+  // Handle Windows password reset
+  const handlePasswordReset = async (username: string) => {
+    if (!instance) {
+      throw new Error('Instance not found');
+    }
+    
+    try {
+      const result = await apiService.resetWindowsPassword(instance.id, username);
+      return result;
+    } catch (error) {
+      // Re-throw the error to be handled by the modal
+      throw error;
+    }
+  };
+
+  // Check if instance is Windows-based
+  const isWindowsInstance = instance && (
+    instance.imageId === 'windows-general' || 
+    instance.imageId === '3d-rendering-cad'
+  );
 
   // Not found state
   if (!instance) {
@@ -135,11 +184,22 @@ export default function InstanceDetail() {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 sm:gap-6">
             {/* Left: Title and metadata */}
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
                 <h1 className="text-2xl font-semibold text-gray-900">{instance.name}</h1>
                 <Badge variant={instance.status === 'RUNNING' ? 'success' : instance.status === 'STOPPED' ? 'neutral' : 'info'}>
                   {instance.status === 'RUNNING' ? 'Running' : instance.status === 'STOPPED' ? 'Stopped' : 'Provisioning'}
                 </Badge>
+                {instance.gcpInstanceId ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    <Cloud className="w-3 h-3 mr-1" />
+                    GCP
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+                    <Monitor className="w-3 h-3 mr-1" />
+                    Demo
+                  </span>
+                )}
               </div>
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
@@ -187,6 +247,19 @@ export default function InstanceDetail() {
                       {isActionLoading ? 'Starting...' : 'Start'}
                     </>
                   )}
+                </Button>
+              )}
+
+              {/* Windows Password Reset Button - Only for Windows instances in RUNNING status */}
+              {isWindowsInstance && instance.status === 'RUNNING' && (
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowPasswordResetModal(true)}
+                  disabled={isActionLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <Key className="w-4 h-4" />
+                  Reset Windows Password
                 </Button>
               )}
 
@@ -300,6 +373,106 @@ export default function InstanceDetail() {
                     </dd>
                   </div>
                 </div>
+              )}
+
+              {/* GCP Metadata Section - Only show if instance is GCP-managed */}
+              {instance.gcpInstanceId && (
+                <>
+                  <div className="border-t border-gray-200 pt-6" />
+                  
+                  {/* Instance Type Indicator */}
+                  <div className="flex items-start gap-4">
+                    <Cloud className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <div className="flex-1">
+                      <dt className="text-sm font-medium text-gray-500 mb-1">Instance Type</dt>
+                      <dd>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                          <Cloud className="w-3 h-3 mr-1" />
+                          GCP-Managed Instance
+                        </span>
+                      </dd>
+                    </div>
+                  </div>
+
+                  {/* GCP Instance ID */}
+                  <div className="flex items-start gap-4">
+                    <Server className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <div className="flex-1">
+                      <dt className="text-sm font-medium text-gray-500 mb-1">GCP Instance ID</dt>
+                      <dd className="text-base font-mono text-gray-900 break-all">{instance.gcpInstanceId}</dd>
+                    </div>
+                  </div>
+
+                  {/* GCP Zone */}
+                  {instance.gcpZone && (
+                    <div className="flex items-start gap-4">
+                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">GCP Zone</dt>
+                        <dd className="text-base font-medium text-gray-900">{instance.gcpZone}</dd>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GCP Machine Type */}
+                  {instance.gcpMachineType && (
+                    <div className="flex items-start gap-4">
+                      <Cpu className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">GCP Machine Type</dt>
+                        <dd className="text-base font-mono text-gray-900">{instance.gcpMachineType}</dd>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* External IP Address */}
+                  {instance.gcpExternalIp && (
+                    <div className="flex items-start gap-4">
+                      <Network className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <dt className="text-sm font-medium text-gray-500 mb-1">External IP Address</dt>
+                        <dd className="text-base font-mono text-gray-900">{instance.gcpExternalIp}</dd>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Demo Instance Indicator - Only show if NOT GCP-managed */}
+              {!instance.gcpInstanceId && (
+                <>
+                  <div className="border-t border-gray-200 pt-6" />
+                  
+                  <div className="flex items-start gap-4">
+                    <Monitor className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <div className="flex-1">
+                      <dt className="text-sm font-medium text-gray-500 mb-1">Instance Type</dt>
+                      <dd>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                          <Monitor className="w-3 h-3 mr-1" />
+                          Demo Instance
+                        </span>
+                      </dd>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Error Message - Show if present */}
+              {instance.errorMessage && (
+                <>
+                  <div className="border-t border-gray-200 pt-6" />
+                  
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-red-900 mb-1">Error</p>
+                        <p className="text-sm text-red-700">{instance.errorMessage}</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </dl>
           </Card>
@@ -453,6 +626,17 @@ export default function InstanceDetail() {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Windows Password Reset Modal */}
+      {instance && (
+        <WindowsPasswordResetModal
+          instanceId={instance.id}
+          instanceName={instance.name}
+          isOpen={showPasswordResetModal}
+          onClose={() => setShowPasswordResetModal(false)}
+          onResetPassword={handlePasswordReset}
+        />
       )}
     </div>
   );

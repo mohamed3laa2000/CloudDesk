@@ -18,6 +18,9 @@ router.get('/:id', instanceController.getInstance);
 // PATCH /api/instances/:id/status - Update instance status
 router.patch('/:id/status', instanceController.updateStatus);
 
+// POST /api/instances/:id/reset-password - Reset Windows password
+router.post('/:id/reset-password', instanceController.resetWindowsPassword);
+
 // DELETE /api/instances/:id - Delete instance (soft delete)
 router.delete('/:id', instanceController.deleteInstance);
 

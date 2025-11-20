@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
-import type { Instance, InstanceStatus, UsageSummary, UsageRow } from '../data/types';
+import type { Instance, InstanceStatus, UsageSummary, UsageRow, WindowsPasswordResetResponse } from '../data/types';
 import type { UserPreferences, ProfileUpdateData } from '../types/preferences';
 
 // Callback function for handling logout on 401 errors
@@ -30,13 +30,57 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401 errors and network issues
+// GCP Error codes from backend
+const GCP_ERROR_CODES = {
+  AUTH_ERROR: 'GCP_AUTH_ERROR',
+  PERMISSION_ERROR: 'GCP_PERMISSION_ERROR',
+  QUOTA_ERROR: 'GCP_QUOTA_ERROR',
+  NOT_FOUND: 'GCP_NOT_FOUND',
+  TIMEOUT: 'GCP_TIMEOUT',
+  INVALID_CONFIG: 'GCP_INVALID_CONFIG',
+  COMMAND_ERROR: 'GCP_COMMAND_ERROR',
+  SDK_NOT_INSTALLED: 'GCP_SDK_NOT_INSTALLED',
+  ZONE_EXHAUSTED: 'GCP_ZONE_EXHAUSTED'
+};
+
+/**
+ * Get user-friendly error message for GCP errors
+ * @param errorCode - GCP error code from backend
+ * @param defaultMessage - Default message if no specific mapping exists
+ * @returns User-friendly error message
+ */
+const getGcpErrorMessage = (errorCode: string, defaultMessage: string): string => {
+  switch (errorCode) {
+    case GCP_ERROR_CODES.AUTH_ERROR:
+      return 'GCP authentication failed. The system needs to be re-authenticated with Google Cloud. Please contact your administrator.';
+    case GCP_ERROR_CODES.PERMISSION_ERROR:
+      return 'Insufficient permissions to perform this operation. Your account may not have the required GCP permissions. Please contact your administrator.';
+    case GCP_ERROR_CODES.QUOTA_ERROR:
+      return 'GCP resource quota exceeded. You may have reached your limit for VMs in this region. Try selecting a different region or contact support to increase your quota.';
+    case GCP_ERROR_CODES.ZONE_EXHAUSTED:
+      return 'The selected machine configuration is currently unavailable in this zone due to high demand. Please try selecting a different region or try again later.';
+    case GCP_ERROR_CODES.NOT_FOUND:
+      return 'The VM instance was not found in Google Cloud. It may have been deleted externally or there may be a synchronization issue.';
+    case GCP_ERROR_CODES.TIMEOUT:
+      return 'The operation timed out. This can happen with slow network connections or when GCP is experiencing high load. Please try again in a few moments.';
+    case GCP_ERROR_CODES.INVALID_CONFIG:
+      return 'Invalid VM configuration. The selected combination of resources may not be available in the chosen region. Please try adjusting your configuration.';
+    case GCP_ERROR_CODES.SDK_NOT_INSTALLED:
+      return 'GCP SDK is not properly configured on the server. Please contact your administrator to resolve this issue.';
+    case GCP_ERROR_CODES.COMMAND_ERROR:
+      return defaultMessage || 'An error occurred while communicating with Google Cloud. Please try again or contact support if the problem persists.';
+    default:
+      return defaultMessage;
+  }
+};
+
+// Response interceptor to handle 401 errors, network issues, and GCP-specific errors
 apiClient.interceptors.response.use(
   (response) => {
     // Pass through successful responses
     return response;
   },
-  (error: AxiosError<{ message?: string }>) => {
+  (error: AxiosError<{ message?: string; error?: string; details?: any }>) => {
     // Handle 401 Unauthorized errors (invalid or expired token)
     if (error.response?.status === 401) {
       console.error('Unauthorized: Token is invalid or expired');
@@ -54,7 +98,26 @@ apiClient.interceptors.response.use(
     // Handle network errors (no response from server)
     if (!error.response) {
       console.error('Network error: Unable to connect to server');
-      error.message = 'Unable to connect to server. Please check your connection.';
+      error.message = 'Unable to connect to server. Please check your internet connection and try again.';
+      return Promise.reject(error);
+    }
+    
+    // Check if this is a GCP-specific error
+    const responseData = error.response.data;
+    const gcpErrorCode = responseData?.error;
+    
+    if (gcpErrorCode && Object.values(GCP_ERROR_CODES).includes(gcpErrorCode)) {
+      // This is a GCP error - use specialized error message
+      const serverMessage = responseData?.message || '';
+      error.message = getGcpErrorMessage(gcpErrorCode, serverMessage);
+      
+      // Log GCP error details for debugging
+      console.error('GCP Error:', {
+        code: gcpErrorCode,
+        message: error.message,
+        details: responseData?.details
+      });
+      
       return Promise.reject(error);
     }
     
@@ -202,6 +265,17 @@ export const apiService = {
   getInstance: async (id: string): Promise<Instance> => {
     const response = await apiClient.get(`/api/instances/${id}`);
     return response.data.instance;
+  },
+
+  /**
+   * Reset Windows password for an instance
+   * @param id - Instance ID
+   * @param username - Windows username
+   * @returns Promise with password reset data (username, password, ipAddress)
+   */
+  resetWindowsPassword: async (id: string, username: string): Promise<WindowsPasswordResetResponse> => {
+    const response = await apiClient.post(`/api/instances/${id}/reset-password`, { username });
+    return response.data.data;
   },
 
   // Billing API methods

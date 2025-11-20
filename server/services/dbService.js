@@ -23,7 +23,14 @@ const transformInstanceRow = (row) => {
     region: row.region,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    userEmail: row.user_email  // Include for backend ownership checks
+    userEmail: row.user_email,  // Include for backend ownership checks
+    // GCP metadata fields
+    gcpInstanceId: row.gcp_instance_id || null,
+    gcpZone: row.gcp_zone || null,
+    gcpMachineType: row.gcp_machine_type || null,
+    gcpProjectId: row.gcp_project_id || null,
+    gcpExternalIp: row.gcp_external_ip || null,
+    errorMessage: row.error_message || null
   };
 };
 
@@ -43,7 +50,18 @@ const connect = async () => {
           connectionString: process.env.DATABASE_URL,
           ssl: {
             rejectUnauthorized: false // Required for Supabase
-          }
+          },
+          // Connection pool settings for Supabase
+          max: 20, // Maximum number of clients in the pool
+          idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+          connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+          allowExitOnIdle: false // Keep the pool alive even if all clients are idle
+        });
+
+        // Handle pool errors
+        pool.on('error', (err) => {
+          console.error('Unexpected error on idle database client', err);
+          // Don't exit the process, just log the error
         });
 
         // Test the connection
@@ -143,7 +161,13 @@ const getInstancesByUser = async (email) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
       FROM instances 
       WHERE user_email = $1 AND status != 'DELETED'
       ORDER BY created_at DESC
@@ -168,9 +192,15 @@ const getInstancesByUser = async (email) => {
  * @param {number} instanceData.storageGb - Storage in GB
  * @param {string} instanceData.gpu - GPU type
  * @param {string} instanceData.region - Region
+ * @param {object|null} gcpMetadata - Optional GCP metadata
+ * @param {string} gcpMetadata.gcpInstanceId - GCP instance name
+ * @param {string} gcpMetadata.gcpZone - GCP zone
+ * @param {string} gcpMetadata.gcpMachineType - GCP machine type
+ * @param {string} gcpMetadata.gcpProjectId - GCP project ID
+ * @param {string} gcpMetadata.gcpExternalIp - GCP external IP address
  * @returns {Promise<object>} - Created instance object
  */
-const createInstance = async (email, instanceData) => {
+const createInstance = async (email, instanceData, gcpMetadata = null) => {
   try {
     if (!pool) {
       throw new Error('Database connection not established. Call connect() first.');
@@ -191,9 +221,14 @@ const createInstance = async (email, instanceData) => {
         storage_gb,
         gpu,
         region,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
         created_at,
         updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING 
         id,
         user_email,
@@ -206,7 +241,13 @@ const createInstance = async (email, instanceData) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
     `;
 
     const values = [
@@ -219,7 +260,12 @@ const createInstance = async (email, instanceData) => {
       instanceData.ramGb,
       instanceData.storageGb,
       instanceData.gpu,
-      instanceData.region
+      instanceData.region,
+      gcpMetadata?.gcpInstanceId || null,
+      gcpMetadata?.gcpZone || null,
+      gcpMetadata?.gcpMachineType || null,
+      gcpMetadata?.gcpProjectId || null,
+      gcpMetadata?.gcpExternalIp || null
     ];
 
     const result = await pool.query(query, values);
@@ -239,9 +285,10 @@ const createInstance = async (email, instanceData) => {
  * Update instance status
  * @param {string} id - Instance ID
  * @param {string} status - New status (PROVISIONING, RUNNING, STOPPED, DELETED, ERROR)
+ * @param {string|null} errorMessage - Optional error message (used when status is ERROR)
  * @returns {Promise<object>} - Updated instance object
  */
-const updateInstanceStatus = async (id, status) => {
+const updateInstanceStatus = async (id, status, errorMessage = null) => {
   try {
     if (!pool) {
       throw new Error('Database connection not established. Call connect() first.');
@@ -257,8 +304,9 @@ const updateInstanceStatus = async (id, status) => {
       UPDATE instances 
       SET 
         status = $1,
+        error_message = $2,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2
+      WHERE id = $3
       RETURNING 
         id,
         user_email,
@@ -271,10 +319,16 @@ const updateInstanceStatus = async (id, status) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
     `;
 
-    const result = await pool.query(query, [status, id]);
+    const result = await pool.query(query, [status, errorMessage, id]);
     
     if (result.rows.length === 0) {
       throw new Error(`Instance with id ${id} not found`);
@@ -316,7 +370,13 @@ const deleteInstance = async (id) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
     `;
 
     const result = await pool.query(query, [id]);
@@ -356,7 +416,13 @@ const getInstanceById = async (id) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
       FROM instances 
       WHERE id = $1
     `;
@@ -396,7 +462,13 @@ const calculateUsageSummary = async (email) => {
         gpu,
         region,
         created_at,
-        updated_at
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
       FROM instances 
       WHERE user_email = $1
       ORDER BY created_at DESC

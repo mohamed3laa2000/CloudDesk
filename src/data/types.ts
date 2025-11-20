@@ -15,6 +15,8 @@ export type GpuType =
 export type GpuCategory = 'NONE' | 'ENTRY' | 'PROFESSIONAL' | 'ENTERPRISE' | 'WORKSTATION';
 
 export type Region = 
+  | 'SINGAPORE'
+  | 'IOWA'
   | 'US_EAST_1' 
   | 'US_EAST_2' 
   | 'US_WEST_1' 
@@ -41,6 +43,13 @@ export interface Instance {
   region: Region;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  // GCP-specific fields (optional, null for demo instances)
+  gcpInstanceId?: string | null;
+  gcpZone?: string | null;
+  gcpMachineType?: string | null;
+  gcpProjectId?: string | null;
+  gcpExternalIp?: string | null;
+  errorMessage?: string | null;
 }
 
 export interface ImagePreset {
@@ -93,6 +102,8 @@ export interface DailyUsage {
 
 // Helper type for region display
 export const REGION_NAMES: Record<Region, string> = {
+  SINGAPORE: 'Singapore',
+  IOWA: 'Iowa (US)',
   US_EAST_1: 'US East (N. Virginia)',
   US_EAST_2: 'US East (Ohio)',
   US_WEST_1: 'US West (N. California)',
@@ -107,6 +118,19 @@ export const REGION_NAMES: Record<Region, string> = {
   MIDDLE_EAST_1: 'Middle East (Bahrain)',
   SOUTH_AMERICA_1: 'South America (São Paulo)',
 };
+
+// GCP region mapping for GCP Compute integration
+export const GCP_REGION_MAPPING: Record<string, { region: string; zone: string }> = {
+  'SINGAPORE': { region: 'asia-southeast1', zone: 'asia-southeast1-a' },
+  'IOWA': { region: 'us-central1', zone: 'us-central1-a' },
+};
+
+// Windows password reset response type
+export interface WindowsPasswordResetResponse {
+  username: string;
+  password: string;
+  ipAddress: string;
+}
 
 // GPU specifications with detailed info
 export interface GpuSpec {

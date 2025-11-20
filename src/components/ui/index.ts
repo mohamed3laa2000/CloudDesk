@@ -17,5 +17,8 @@ export type { BadgeProps, CountBadgeProps } from './Badge'
 export { DemoModeBadge } from './DemoModeBadge'
 export type { DemoModeBadgeProps } from './DemoModeBadge'
 
+export { ErrorAlert } from './ErrorAlert'
+export type { ErrorAlertProps } from './ErrorAlert'
+
 export { Tabs, UnderlineTabs } from './Tabs'
 export type { TabsProps, TabItem, UnderlineTabsProps, UnderlineTabItem } from './Tabs'

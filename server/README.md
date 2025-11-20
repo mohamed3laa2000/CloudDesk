@@ -39,9 +39,18 @@ npm start
 
 ## API Endpoints
 
+### Authentication
 - `POST /api/auth/login` - Login with Firebase ID token
 - `POST /api/auth/verify` - Verify JWT token
 - `GET /api/health` - Health check
+
+### Instance Management
+- `GET /api/instances` - List all instances for authenticated user
+- `POST /api/instances` - Create new instance (provisions GCP VM if enabled)
+- `GET /api/instances/:id` - Get instance details
+- `PATCH /api/instances/:id/status` - Update instance status (start/stop)
+- `DELETE /api/instances/:id` - Delete instance (removes GCP VM if applicable)
+- `POST /api/instances/:id/reset-password` - Reset Windows password (GCP only)
 
 ## Database Migrations
 
@@ -65,16 +74,198 @@ Migration files are located in `server/migrations/` and are executed in alphabet
 2. Write your SQL statements in the file
 3. Run `npm run migrate` to apply the migration
 
+## GCP Compute Engine Integration
+
+CloudDesk supports real VM provisioning using Google Cloud Platform Compute Engine.
+
+### Prerequisites
+
+1. **GCP Project Setup**
+   - Active GCP project with billing enabled
+   - Compute Engine API enabled
+   - Cloud Resource Manager API enabled
+
+2. **gcloud SDK Installation**
+   ```bash
+   # Install gcloud SDK (see https://cloud.google.com/sdk/docs/install)
+   
+   # Verify installation
+   gcloud --version
+   ```
+
+3. **Service Account Configuration**
+   ```bash
+   # Create service account
+   gcloud iam service-accounts create clouddesk-compute \
+     --display-name="CloudDesk Compute Service Account"
+   
+   # Grant Compute Instance Admin role
+   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+     --member="serviceAccount:clouddesk-compute@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/compute.instanceAdmin.v1"
+   
+   # Create service account key
+   gcloud iam service-accounts keys create ~/clouddesk-sa-key.json \
+     --iam-account=clouddesk-compute@YOUR_PROJECT_ID.iam.gserviceaccount.com
+   ```
+
+4. **Authenticate on Server**
+   ```bash
+   gcloud auth activate-service-account \
+     --key-file=/path/to/clouddesk-sa-key.json
+   
+   # Set default project
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+
+### Required GCP Permissions
+
+The service account needs the following permissions:
+
+- `compute.instances.create` - Create VM instances
+- `compute.instances.delete` - Delete VM instances
+- `compute.instances.get` - Query instance status
+- `compute.instances.list` - List instances
+- `compute.instances.start` - Start stopped instances
+- `compute.instances.stop` - Stop running instances
+- `compute.instances.setMetadata` - Windows password reset
+- `compute.disks.create` - Create boot disks
+- `compute.images.useReadOnly` - Use Windows images
+- `compute.zones.get` - Access zone information
+
+**Recommended:** Use the built-in `roles/compute.instanceAdmin.v1` role which includes all required permissions.
+
+### Configuration
+
+Add to your `.env` file:
+
+```env
+# GCP Configuration
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_ENABLED=true  # Set to false for demo mode
+```
+
+### Supported Regions
+
+| CloudDesk Region | GCP Region | GCP Zone |
+|-----------------|------------|----------|
+| SINGAPORE | asia-southeast1 | asia-southeast1-a |
+| IOWA | us-central1 | us-central1-a |
+
+### Features
+
+**When GCP is Enabled:**
+- Real Windows Server VM provisioning
+- Instance lifecycle management (start/stop/delete)
+- Windows password reset functionality
+- Real-time status synchronization with GCP
+- External IP address assignment
+- Comprehensive error handling and logging
+
+**When GCP is Disabled (Demo Mode):**
+- Database-only instance management
+- Instant operations (no actual VMs)
+- No GCP costs
+- Perfect for development and testing
+
+### GCP Service Architecture
+
+The `gcpService.js` module handles all GCP interactions:
+
+```javascript
+// Core operations
+createInstance(config)           // Provision new VM
+startInstance(name, zone)        // Start stopped VM
+stopInstance(name, zone)         // Stop running VM
+deleteInstance(name, zone)       // Delete VM
+getInstanceStatus(name, zone)    // Query VM status
+resetWindowsPassword(name, zone, username)  // Reset Windows password
+
+// Internal helpers
+_executeGcloudCommand(args)      // Execute gcloud CLI commands
+_mapToMachineType(cpu, ram)      // Map resources to GCP machine types
+_mapToGcpZone(region)            // Map CloudDesk regions to GCP zones
+_mapToGcpImage(imageId)          // Map image presets to Windows images
+```
+
+### Error Handling
+
+The GCP service provides structured error responses:
+
+- `GCP_AUTH_ERROR` - Authentication required
+- `GCP_PERMISSION_ERROR` - Insufficient permissions
+- `GCP_QUOTA_ERROR` - Project quota exceeded
+- `GCP_NOT_FOUND` - Instance not found
+- `GCP_TIMEOUT` - Operation timed out
+- `GCP_INVALID_CONFIG` - Invalid configuration
+
+### Logging
+
+All GCP operations are logged with:
+- Operation type and parameters
+- Execution time
+- Success/failure status
+- Error details (if applicable)
+- User context
+
+### Testing
+
+Run GCP service tests:
+```bash
+npm test -- gcpService.test.js
+```
+
+Tests include:
+- Machine type mapping validation
+- Region to zone mapping
+- Command execution with timeouts
+- Error handling scenarios
+- Status transition validation
+
+### Troubleshooting
+
+**gcloud not found:**
+- Ensure gcloud SDK is installed and in PATH
+- Restart terminal after installation
+
+**Authentication errors:**
+- Verify service account key is valid
+- Check service account has required permissions
+- Re-authenticate with `gcloud auth activate-service-account`
+
+**Permission denied:**
+- Verify IAM role assignment
+- Check that Compute Engine API is enabled
+- Review service account permissions in GCP Console
+
+**Quota exceeded:**
+- Check project quotas in GCP Console
+- Request quota increases if needed
+- Try different region
+
 ## Project Structure
 
 ```
 server/
 ├── config/          # Configuration files
 ├── controllers/     # Request handlers
+│   ├── authController.js
+│   ├── instanceController.js
+│   └── ...
 ├── middleware/      # Express middleware
 ├── migrations/      # Database migration scripts
 ├── routes/          # API routes
+│   ├── auth.js
+│   ├── instances.js
+│   └── ...
 ├── services/        # Business logic services
+│   ├── firebaseAdmin.js
+│   ├── jwtService.js
+│   ├── dbService.js
+│   └── gcpService.js      # GCP Compute Engine integration
+├── tests/           # Unit and integration tests
+│   ├── gcpService.test.js
+│   └── ...
 ├── index.js         # Application entry point
 └── package.json     # Dependencies
 ```
