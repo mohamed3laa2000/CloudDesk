@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import { apiService } from '../services/api';
 import { useAuth } from './AuthContext';
 import type { UserPreferences } from '../types/preferences';
-import { DEFAULT_PREFERENCES, ACCENT_COLORS, type ThemeMode } from '../types/preferences';
+import { DEFAULT_PREFERENCES, type ThemeMode } from '../types/preferences';
 
 export interface PreferencesContextValue {
   preferences: UserPreferences;
@@ -27,14 +27,27 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
 
   const applyTheme = (theme: ThemeMode, accentColor: string): void => {
     const root = document.documentElement;
+    
+    // Only apply dark mode if user is authenticated
+    // For unauthenticated pages (login, homepage, etc.), always use light mode
+    if (!isAuthenticated) {
+      root.classList.remove('dark');
+      return;
+    }
+    
     let effectiveTheme = theme;
     if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       effectiveTheme = prefersDark ? 'dark' : 'light';
     }
-    root.setAttribute('data-theme', effectiveTheme);
-    const accentClass = ACCENT_COLORS.find((c) => c.value === accentColor)?.class || 'accent-teal';
-    root.className = accentClass;
+    
+    // Apply Tailwind dark mode class
+    if (effectiveTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
     localStorage.setItem('theme', theme);
     localStorage.setItem('accentColor', accentColor);
   };
@@ -129,6 +142,11 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
 
   useEffect(() => {
     loadPreferences();
+    
+    // Remove dark mode when user logs out
+    if (!isAuthenticated) {
+      document.documentElement.classList.remove('dark');
+    }
   }, [isAuthenticated, user?.email]);
 
   useEffect(() => {

@@ -295,17 +295,17 @@ export function TermsOfService() {
                 <div className="space-y-4 text-gray-600">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Governing Law</h3>
-                    <p>These Terms are governed by the laws of the State of California, United States, without regard to conflict of law principles.</p>
+                    <p>These Terms are governed by and construed in accordance with the laws of the Republic of Indonesia, without regard to conflict of law principles.</p>
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Arbitration</h3>
-                    <p>Any disputes arising from these Terms or the Service shall be resolved through binding arbitration in San Francisco, California, except that either party may seek injunctive relief in court for intellectual property violations.</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Jurisdiction</h3>
+                    <p>Any disputes arising from these Terms or the Service shall be subject to the exclusive jurisdiction of the courts of Indonesia. Both parties consent to the jurisdiction and venue of such courts.</p>
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Class Action Waiver</h3>
-                    <p>You agree to resolve disputes on an individual basis and waive the right to participate in class actions or class arbitrations.</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Dispute Resolution Process</h3>
+                    <p>Before initiating legal proceedings, parties agree to attempt to resolve disputes through good faith negotiation. If negotiation fails, disputes may be submitted to mediation or the appropriate Indonesian courts.</p>
                   </div>
                 </div>
               </div>
@@ -327,12 +327,16 @@ export function TermsOfService() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. Contact Information</h2>
                 <div className="space-y-2 text-gray-600">
                   <p>For questions about these Terms, please contact us:</p>
-                  <div className="mt-4 p-6 bg-gray-50 rounded-lg">
-                    <p><strong>Email:</strong> legal@clouddesk.edu</p>
-                    <p><strong>Mail:</strong> CloudDesk EDU Legal Department<br />
-                    123 Cloud Street<br />
-                    San Francisco, CA 94105<br />
-                    United States</p>
+                  <div className="mt-4 p-6 bg-gray-50 rounded-lg space-y-3">
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">Legal Officer</p>
+                      <p><strong>Name:</strong> Gabriel Seto Pribadi</p>
+                      <p><strong>Email:</strong> me@gabrielseto.dev</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">General Inquiries</p>
+                      <p><strong>Email:</strong> legal@clouddesk.edu</p>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -236,21 +236,21 @@ export default function CreateInstance() {
     <div>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
-        <div className="mb-2 text-xs sm:text-sm text-gray-500">
-          <Link to="/dashboard" className="hover:text-gray-900">
+        <div className="mb-2 text-xs sm:text-sm text-gray-600 dark:text-gray-100">
+          <Link to="/dashboard" className="hover:text-gray-900 dark:hover:text-gray-50">
             Dashboard
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-gray-900">Create Desktop</span>
+          <span className="text-gray-900 dark:text-gray-50">Create Desktop</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Create New Desktop</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50">Create New Desktop</h1>
         
         {/* Demo Mode Reminder */}
         {isDemoMode && (
-          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-xs text-amber-800">
+          <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 rounded-lg">
+            <p className="text-xs text-amber-900 dark:text-amber-100">
               <span className="font-semibold">Demo Mode:</span> This instance will be stored in your browser only. 
-              Your data won't be persisted to a database. <Link to="/onboarding" className="underline hover:text-amber-900">Sign up</Link> to save your work.
+              Your data won't be persisted to a database. <Link to="/onboarding" className="underline hover:text-amber-900 dark:hover:text-amber-50">Sign up</Link> to save your work.
             </p>
           </div>
         )}
@@ -272,7 +272,7 @@ export default function CreateInstance() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Preset Selection - Compact */}
             <Card className="p-4 sm:p-6">
-              <h2 className="mb-4 text-base font-semibold text-gray-900">1. Choose Preset</h2>
+              <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">1. Choose Preset</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {IMAGE_PRESETS.map((preset) => {
                   const Icon = PRESET_ICONS[preset.id] || Monitor;
@@ -285,15 +285,15 @@ export default function CreateInstance() {
                       onClick={() => handlePresetSelect(preset.id)}
                       className={`text-left p-4 rounded-lg border-2 transition-all ${
                         isSelected
-                          ? 'border-indigo-600 bg-indigo-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 dark:border-indigo-400'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
                       }`}
                     >
                       <div className="flex items-center gap-3 mb-2">
-                        <Icon className="h-5 w-5 text-indigo-600 flex-shrink-0" />
-                        <span className="text-sm font-semibold text-gray-900">{preset.name}</span>
+                        <Icon className="h-5 w-5 text-indigo-600 dark:text-indigo-300 flex-shrink-0" />
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">{preset.name}</span>
                       </div>
-                      <p className="text-xs text-gray-600 line-clamp-2">{preset.description}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-100 line-clamp-2">{preset.description}</p>
                     </button>
                   );
                 })}
@@ -302,11 +302,11 @@ export default function CreateInstance() {
 
             {/* Basic Configuration */}
             <Card className="p-4 sm:p-6">
-              <h2 className="mb-4 text-base font-semibold text-gray-900">2. Basic Configuration</h2>
+              <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">2. Basic Configuration</h2>
               <div className="space-y-4">
                 {/* Instance Name */}
                 <div>
-                  <label htmlFor="instanceName" className="mb-1.5 block text-sm font-medium text-gray-900">
+                  <label htmlFor="instanceName" className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-gray-100">
                     Desktop Name *
                   </label>
                   <Input
@@ -318,13 +318,13 @@ export default function CreateInstance() {
                     className={errors.instanceName ? 'border-red-500' : ''}
                   />
                   {errors.instanceName && (
-                    <p className="mt-1 text-xs text-red-600">{errors.instanceName}</p>
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.instanceName}</p>
                   )}
                 </div>
 
                 {/* Region */}
                 <div>
-                  <label htmlFor="region" className="mb-1.5 block text-sm font-medium text-gray-900">
+                  <label htmlFor="region" className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-gray-100">
                     Region *
                   </label>
                   <Select
@@ -344,16 +344,16 @@ export default function CreateInstance() {
 
             {/* Resources */}
             <Card className="p-4 sm:p-6">
-              <h2 className="mb-4 text-base font-semibold text-gray-900">3. Resources</h2>
+              <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">3. Resources</h2>
               <div className="space-y-5">
 
                 {/* CPU Cores */}
                 <div>
                   <div className="mb-1.5 flex items-center justify-between">
-                    <label htmlFor="cpuCores" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="cpuCores" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       CPU Cores
                     </label>
-                    <span className="text-sm font-semibold text-indigo-600">
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-200">
                       {cpuCores} vCPU
                     </span>
                   </div>
@@ -365,9 +365,9 @@ export default function CreateInstance() {
                     step="1"
                     value={cpuCores}
                     onChange={(e) => setCpuCores(parseInt(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-indigo-600"
+                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 dark:bg-gray-600 accent-indigo-600 dark:accent-indigo-400"
                   />
-                  <div className="mt-1.5 flex justify-between text-xs text-gray-400">
+                  <div className="mt-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-100">
                     <span>1</span>
                     <span>8</span>
                     <span>16</span>
@@ -377,10 +377,10 @@ export default function CreateInstance() {
                 {/* RAM */}
                 <div>
                   <div className="mb-1.5 flex items-center justify-between">
-                    <label htmlFor="ramGb" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="ramGb" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       RAM
                     </label>
-                    <span className="text-sm font-semibold text-indigo-600">
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-200">
                       {ramGb} GB
                     </span>
                   </div>
@@ -392,9 +392,9 @@ export default function CreateInstance() {
                     step="2"
                     value={ramGb}
                     onChange={(e) => setRamGb(parseInt(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-indigo-600"
+                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 dark:bg-gray-600 accent-indigo-600 dark:accent-indigo-400"
                   />
-                  <div className="mt-1.5 flex justify-between text-xs text-gray-400">
+                  <div className="mt-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-100">
                     <span>2</span>
                     <span>32</span>
                     <span>64</span>
@@ -404,10 +404,10 @@ export default function CreateInstance() {
                 {/* Storage */}
                 <div>
                   <div className="mb-1.5 flex items-center justify-between">
-                    <label htmlFor="storageGb" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="storageGb" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       Storage
                     </label>
-                    <span className="text-sm font-semibold text-indigo-600">
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-200">
                       {storageGb} GB
                     </span>
                   </div>
@@ -419,20 +419,20 @@ export default function CreateInstance() {
                     step="10"
                     value={storageGb}
                     onChange={(e) => setStorageGb(parseInt(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-indigo-600"
+                    className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 dark:bg-gray-600 accent-indigo-600 dark:accent-indigo-400"
                   />
-                  <div className="mt-1.5 flex justify-between text-xs text-gray-400">
+                  <div className="mt-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-100">
                     <span>{minStorageGb}</span>
                     <span>250</span>
                     <span>500</span>
                   </div>
                   {isWindowsPreset && (
-                    <p className="mt-1.5 text-xs text-amber-600">
+                    <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-200">
                       Windows requires minimum {minStorageGb} GB storage
                     </p>
                   )}
                   {errors.storageGb && (
-                    <p className="mt-1 text-xs text-red-600">{errors.storageGb}</p>
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.storageGb}</p>
                   )}
                 </div>
               </div>
@@ -440,7 +440,7 @@ export default function CreateInstance() {
 
             {/* GPU Selection - Compact */}
             <Card className="p-4 sm:p-6">
-              <h2 className="mb-4 text-base font-semibold text-gray-900">4. GPU (Optional)</h2>
+              <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">4. GPU (Optional)</h2>
               <div className="space-y-2">
 
                 <Select
@@ -453,7 +453,7 @@ export default function CreateInstance() {
                     </option>
                   ))}
                 </Select>
-                <p className="mt-1.5 text-xs text-gray-500">
+                <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-100">
                   Required for ML, 3D rendering, and graphics workloads
                 </p>
               </div>
@@ -465,22 +465,22 @@ export default function CreateInstance() {
             <div className="lg:sticky lg:top-6 space-y-4">
               {/* Configuration Summary */}
               <Card className="p-4 sm:p-6">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">Configuration Summary</h3>
+                <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">Configuration Summary</h3>
                 
                 {/* Preset */}
-                <div className="mb-4 pb-4 border-b border-gray-200">
-                  <p className="text-xs text-gray-500 mb-1">Preset</p>
-                  <p className="text-sm font-medium text-gray-900">{selectedPreset?.name}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">{selectedPreset?.osName}</p>
+                <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                  <p className="text-xs text-gray-600 dark:text-gray-100 mb-1">Preset</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{selectedPreset?.name}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-100 mt-0.5">{selectedPreset?.osName}</p>
                   
                   {/* Windows-specific information */}
                   {isWindowsPreset && (
-                    <div className="mt-3 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs font-semibold text-blue-900 mb-1">Windows Server</p>
-                      <p className="text-xs text-blue-800">
+                    <div className="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 rounded-lg">
+                      <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">Windows Server</p>
+                      <p className="text-xs text-blue-800 dark:text-blue-100">
                         Provisioning time: 5-10 minutes
                       </p>
-                      <p className="text-xs text-blue-700 mt-1">
+                      <p className="text-xs text-blue-700 dark:text-blue-100 mt-1">
                         Includes Windows Server 2025 with remote desktop access
                       </p>
                     </div>
@@ -488,16 +488,16 @@ export default function CreateInstance() {
                 </div>
 
                 {/* Name & Region */}
-                <div className="space-y-3 mb-4 pb-4 border-b border-gray-200">
+                <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
                   <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Name</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {instanceName || <span className="text-gray-400">Not set</span>}
+                    <p className="text-xs text-gray-600 dark:text-gray-100 mb-0.5">Name</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                      {instanceName || <span className="text-gray-500 dark:text-gray-200">Not set</span>}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Region</p>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs text-gray-600 dark:text-gray-100 mb-0.5">Region</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
                       {REGIONS.find(r => r.value === region)?.label}
                     </p>
                   </div>
@@ -506,20 +506,20 @@ export default function CreateInstance() {
                 {/* Resources */}
                 <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">CPU</span>
-                    <span className="text-sm font-semibold text-gray-900">{cpuCores} vCPU</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-100">CPU</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">{cpuCores} vCPU</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">RAM</span>
-                    <span className="text-sm font-semibold text-gray-900">{ramGb} GB</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-100">RAM</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">{ramGb} GB</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Storage</span>
-                    <span className="text-sm font-semibold text-gray-900">{storageGb} GB</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-100">Storage</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">{storageGb} GB</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">GPU</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-xs text-gray-600 dark:text-gray-100">GPU</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                       {GPU_OPTIONS.find(g => g.value === gpu)?.label}
                     </span>
                   </div>
@@ -527,28 +527,28 @@ export default function CreateInstance() {
               </Card>
 
               {/* Cost Summary */}
-              <Card className="p-4 sm:p-6 bg-indigo-50 border-indigo-200">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">Cost Estimate</h3>
+              <Card className="p-4 sm:p-6 bg-indigo-50 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700">
+                <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-50">Cost Estimate</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-600 mb-1">Hourly</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-gray-900">
-                      ${hourlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-600">/hr</span>
+                    <p className="text-xs text-gray-700 dark:text-gray-100 mb-1">Hourly</p>
+                    <p className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50">
+                      ${hourlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/hr</span>
                     </p>
                   </div>
-                  <div className="pt-3 border-t border-indigo-200">
-                    <p className="text-xs text-gray-600 mb-1">Monthly estimate</p>
-                    <p className="text-xs text-gray-500 mb-2">(8 hrs/day, 22 days)</p>
-                    <p className="text-lg sm:text-xl font-semibold text-gray-900">
-                      ${monthlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-600">/mo</span>
+                  <div className="pt-3 border-t border-indigo-200 dark:border-indigo-600">
+                    <p className="text-xs text-gray-700 dark:text-gray-100 mb-1">Monthly estimate</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-100 mb-2">(8 hrs/day, 22 days)</p>
+                    <p className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-50">
+                      ${monthlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/mo</span>
                     </p>
                   </div>
                 </div>
                 
                 {/* Billing Notice */}
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="text-xs font-semibold text-blue-900 mb-1.5">Billing Information</h4>
-                  <div className="space-y-1.5 text-xs text-blue-800">
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 rounded-lg">
+                  <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1.5">Billing Information</h4>
+                  <div className="space-y-1.5 text-xs text-blue-900 dark:text-blue-100">
                     <p>
                       <span className="font-medium">Storage:</span> Billed at ${(storageGb * 0.10).toFixed(2)}/month ($0.10/GB/month) regardless of instance state.
                     </p>
@@ -586,7 +586,7 @@ export default function CreateInstance() {
               </div>
 
               {errors.submit && (
-                <p className="text-xs text-red-600 text-center">{errors.submit}</p>
+                <p className="text-xs text-red-600 dark:text-red-300 text-center">{errors.submit}</p>
               )}
             </div>
           </div>

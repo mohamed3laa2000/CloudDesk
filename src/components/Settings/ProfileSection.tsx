@@ -103,10 +103,10 @@ export const ProfileSection: React.FC = () => {
     <div className="w-full max-w-2xl">
       {/* Section Header */}
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 sm:mb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-1 sm:mb-2">
           Profile
         </h2>
-        <p className="text-xs sm:text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100">
           Manage your personal information and account details.
         </p>
       </div>
@@ -157,13 +157,13 @@ export const ProfileSection: React.FC = () => {
         {/* Success Message */}
         {success && (
           <div
-            className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg"
+            className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 rounded-lg"
             role="alert"
             aria-live="polite"
           >
             <div className="flex items-start">
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-300 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -175,10 +175,10 @@ export const ProfileSection: React.FC = () => {
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-green-800">
+                <p className="text-xs sm:text-sm font-medium text-green-800 dark:text-green-200">
                   Profile updated successfully
                 </p>
-                <p className="text-xs sm:text-sm text-green-700 mt-1">
+                <p className="text-xs sm:text-sm text-green-700 dark:text-green-200 mt-1">
                   Your changes have been saved.
                 </p>
               </div>
@@ -189,13 +189,13 @@ export const ProfileSection: React.FC = () => {
         {/* Error Message */}
         {error && !error.includes('Name') && (
           <div
-            className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
+            className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-700 rounded-lg"
             role="alert"
             aria-live="assertive"
           >
             <div className="flex items-start">
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-300 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -207,17 +207,17 @@ export const ProfileSection: React.FC = () => {
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-red-800">
+                <p className="text-xs sm:text-sm font-medium text-red-800 dark:text-red-200">
                   Failed to update profile
                 </p>
-                <p className="text-xs sm:text-sm text-red-700 mt-1">{error}</p>
+                <p className="text-xs sm:text-sm text-red-700 dark:text-red-200 mt-1">{error}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Save Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
           <Button
             type="submit"
             variant="primary"
@@ -256,7 +256,7 @@ export const ProfileSection: React.FC = () => {
           </Button>
           
           {hasChanges && !loading && (
-            <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100 text-center sm:text-left">
               You have unsaved changes
             </p>
           )}

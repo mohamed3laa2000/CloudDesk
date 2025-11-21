@@ -128,14 +128,26 @@ export default function InstanceDetail() {
     instance.imageId === '3d-rendering-cad'
   );
 
+  // Download RDP file function
+  const downloadRDPFile = (instanceName: string, ipAddress: string) => {
+    const rdpContent = `full address:s:${ipAddress}`;
+    const blob = new Blob([rdpContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${instanceName}.rdp`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Not found state
   if (!instance) {
     return (
       <div className="max-w-7xl mx-auto px-8 py-8">
         <Card className="p-16 text-center">
-          <Monitor className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Desktop not found</h2>
-          <p className="text-gray-600 mb-6">
+          <Monitor className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Desktop not found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             This desktop may have been deleted or you don't have access.
           </p>
           <Link to="/dashboard">
@@ -173,7 +185,7 @@ export default function InstanceDetail() {
         {/* Back button */}
         <Link 
           to="/dashboard"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors mb-4"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -185,7 +197,7 @@ export default function InstanceDetail() {
             {/* Left: Title and metadata */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3 flex-wrap">
-                <h1 className="text-2xl font-semibold text-gray-900">{instance.name}</h1>
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{instance.name}</h1>
                 <Badge variant={instance.status === 'RUNNING' ? 'success' : instance.status === 'STOPPED' ? 'neutral' : 'info'}>
                   {instance.status === 'RUNNING' ? 'Running' : instance.status === 'STOPPED' ? 'Stopped' : 'Provisioning'}
                 </Badge>
@@ -195,24 +207,24 @@ export default function InstanceDetail() {
                     GCP
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-slate-600">
                     <Monitor className="w-3 h-3 mr-1" />
                     Demo
                   </span>
                 )}
               </div>
               
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-2">
                   <Monitor className="w-4 h-4" />
                   <span>{preset?.name || 'Custom'}</span>
                 </div>
-                <span className="text-gray-400">•</span>
+                <span className="text-gray-400 dark:text-gray-600">•</span>
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4" />
                   <span>{REGION_NAMES[instance.region]}</span>
                 </div>
-                <span className="text-gray-400">•</span>
+                <span className="text-gray-400 dark:text-gray-600">•</span>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>Created {createdText}</span>
@@ -224,7 +236,7 @@ export default function InstanceDetail() {
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
               {instance.status === 'RUNNING' && (
                 <Button onClick={() => setShowConnectModal(true)} className="w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4 mr-2" />
                   Connect
                 </Button>
               )}
@@ -238,12 +250,12 @@ export default function InstanceDetail() {
                 >
                   {instance.status === 'RUNNING' ? (
                     <>
-                      <Pause className="w-4 h-4" />
+                      <Pause className="w-4 h-4 mr-2" />
                       {isActionLoading ? 'Stopping...' : 'Stop'}
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4" />
+                      <Play className="w-4 h-4 mr-2" />
                       {isActionLoading ? 'Starting...' : 'Start'}
                     </>
                   )}
@@ -258,13 +270,13 @@ export default function InstanceDetail() {
                   disabled={isActionLoading}
                   className="w-full sm:w-auto"
                 >
-                  <Key className="w-4 h-4" />
+                  <Key className="w-4 h-4 mr-2" />
                   Reset Windows Password
                 </Button>
               )}
 
               <Button variant="secondary" onClick={handleBackup} className="w-full sm:w-auto">
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 mr-2" />
                 Backup
               </Button>
 
@@ -274,7 +286,7 @@ export default function InstanceDetail() {
                 disabled={isActionLoading}
                 className="w-full sm:w-auto"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>
             </div>
@@ -287,42 +299,42 @@ export default function InstanceDetail() {
         {/* Left: Configuration */}
         <div className="lg:col-span-2">
           <Card className="p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Configuration</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Configuration</h2>
             
             <dl className="space-y-6">
               {/* CPU */}
               <div className="flex items-start gap-4">
-                <Cpu className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Cpu className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">CPU Cores</dt>
-                  <dd className="text-base font-medium text-gray-900">{instance.cpuCores} vCPU</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">CPU Cores</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{instance.cpuCores} vCPU</dd>
                 </div>
               </div>
 
               {/* RAM */}
               <div className="flex items-start gap-4">
-                <MemoryStick className="w-5 h-5 text-gray-400 mt-0.5" />
+                <MemoryStick className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Memory (RAM)</dt>
-                  <dd className="text-base font-medium text-gray-900">{instance.ramGb} GB</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Memory (RAM)</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{instance.ramGb} GB</dd>
                 </div>
               </div>
 
               {/* Storage */}
               <div className="flex items-start gap-4">
-                <HardDrive className="w-5 h-5 text-gray-400 mt-0.5" />
+                <HardDrive className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Storage</dt>
-                  <dd className="text-base font-medium text-gray-900">{instance.storageGb} GB SSD</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Storage</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{instance.storageGb} GB SSD</dd>
                   {/* Optional: Storage usage bar */}
                   <div className="mt-2">
-                    <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-indigo-600 rounded-full" 
+                        className="h-full bg-teal-600 dark:bg-teal-500 rounded-full" 
                         style={{ width: '56%' }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {Math.floor(instance.storageGb * 0.56)} GB used (56%)
                     </p>
                   </div>
@@ -331,41 +343,41 @@ export default function InstanceDetail() {
 
               {/* GPU */}
               <div className="flex items-start gap-4">
-                <Zap className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Zap className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Graphics (GPU)</dt>
-                  <dd className="text-base font-medium text-gray-900">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Graphics (GPU)</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">
                     {GPU_SPECS[instance.gpu].name}
                   </dd>
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-6" />
+              <div className="border-t border-gray-200 dark:border-slate-700 pt-6" />
 
               {/* Region */}
               <div className="flex items-start gap-4">
-                <Globe className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Globe className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Region</dt>
-                  <dd className="text-base font-medium text-gray-900">{REGION_NAMES[instance.region]}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Region</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{REGION_NAMES[instance.region]}</dd>
                 </div>
               </div>
 
               {/* Operating System */}
               <div className="flex items-start gap-4">
-                <Monitor className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Monitor className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div className="flex-1">
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Operating System</dt>
-                  <dd className="text-base font-medium text-gray-900">{preset?.name || 'Custom Image'}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Operating System</dt>
+                  <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{preset?.name || 'Custom Image'}</dd>
                 </div>
               </div>
 
               {/* Preset Template */}
               {preset && (
                 <div className="flex items-start gap-4">
-                  <Monitor className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <Monitor className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                   <div className="flex-1">
-                    <dt className="text-sm font-medium text-gray-500 mb-1">Preset Template</dt>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Preset Template</dt>
                     <dd>
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                         {preset.description}
@@ -382,11 +394,11 @@ export default function InstanceDetail() {
                   
                   {/* Instance Type Indicator */}
                   <div className="flex items-start gap-4">
-                    <Cloud className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <Cloud className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5" />
                     <div className="flex-1">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Instance Type</dt>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">Instance Type</dt>
                       <dd>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 dark:bg-white text-blue-700 dark:text-blue-600 border border-blue-200 dark:border-blue-300">
                           <Cloud className="w-3 h-3 mr-1" />
                           GCP-Managed Instance
                         </span>
@@ -396,20 +408,20 @@ export default function InstanceDetail() {
 
                   {/* GCP Instance ID */}
                   <div className="flex items-start gap-4">
-                    <Server className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <Server className="w-5 h-5 text-gray-400 dark:text-gray-400 mt-0.5" />
                     <div className="flex-1">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">GCP Instance ID</dt>
-                      <dd className="text-base font-mono text-gray-900 break-all">{instance.gcpInstanceId}</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">GCP Instance ID</dt>
+                      <dd className="text-base font-mono text-gray-900 dark:text-gray-100 break-all">{instance.gcpInstanceId}</dd>
                     </div>
                   </div>
 
                   {/* GCP Zone */}
                   {instance.gcpZone && (
                     <div className="flex items-start gap-4">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">GCP Zone</dt>
-                        <dd className="text-base font-medium text-gray-900">{instance.gcpZone}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">GCP Zone</dt>
+                        <dd className="text-base font-medium text-gray-900 dark:text-gray-100">{instance.gcpZone}</dd>
                       </div>
                     </div>
                   )}
@@ -417,10 +429,10 @@ export default function InstanceDetail() {
                   {/* GCP Machine Type */}
                   {instance.gcpMachineType && (
                     <div className="flex items-start gap-4">
-                      <Cpu className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Cpu className="w-5 h-5 text-gray-400 dark:text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">GCP Machine Type</dt>
-                        <dd className="text-base font-mono text-gray-900">{instance.gcpMachineType}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">GCP Machine Type</dt>
+                        <dd className="text-base font-mono text-gray-900 dark:text-gray-100">{instance.gcpMachineType}</dd>
                       </div>
                     </div>
                   )}
@@ -428,10 +440,10 @@ export default function InstanceDetail() {
                   {/* External IP Address */}
                   {instance.gcpExternalIp && (
                     <div className="flex items-start gap-4">
-                      <Network className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Network className="w-5 h-5 text-gray-400 dark:text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <dt className="text-sm font-medium text-gray-500 mb-1">External IP Address</dt>
-                        <dd className="text-base font-mono text-gray-900">{instance.gcpExternalIp}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">External IP Address</dt>
+                        <dd className="text-base font-mono text-gray-900 dark:text-gray-100">{instance.gcpExternalIp}</dd>
                       </div>
                     </div>
                   )}
@@ -444,11 +456,11 @@ export default function InstanceDetail() {
                   <div className="border-t border-gray-200 pt-6" />
                   
                   <div className="flex items-start gap-4">
-                    <Monitor className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <Monitor className="w-5 h-5 text-gray-400 dark:text-gray-400 mt-0.5" />
                     <div className="flex-1">
-                      <dt className="text-sm font-medium text-gray-500 mb-1">Instance Type</dt>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">Instance Type</dt>
                       <dd>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-slate-600">
                           <Monitor className="w-3 h-3 mr-1" />
                           Demo Instance
                         </span>
@@ -481,44 +493,32 @@ export default function InstanceDetail() {
         {/* Right: Usage & Cost */}
         <div>
           <Card className="p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Usage & Cost</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Usage & Cost</h2>
             
             <div className="space-y-6">
               {/* Hours Used */}
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Hours Used (This Month)</p>
-                <p className="text-2xl font-semibold text-gray-900">{hoursUsed.toFixed(1)} hours</p>
-                <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">Hours Used (This Month)</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{hoursUsed.toFixed(1)} hours</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Last 30 days</p>
               </div>
 
-              <div className="border-t border-gray-200" />
+              <div className="border-t border-gray-200 dark:border-slate-700" />
 
               {/* Estimated Cost */}
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Estimated Cost (This Month)</p>
-                <p className="text-3xl font-semibold text-gray-900">${estimatedCost.toFixed(2)}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">Estimated Cost (This Month)</p>
+                <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">${estimatedCost.toFixed(2)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Based on ${(estimatedCost / hoursUsed || 0).toFixed(2)}/hour
                 </p>
               </div>
 
-              {/* Simple sparkline placeholder */}
-              <div className="pt-4">
-                <p className="text-xs font-medium text-gray-500 mb-2">Usage trend (last 7 days)</p>
-                <div className="h-16 flex items-end gap-1">
-                  {[40, 65, 45, 80, 60, 90, 70].map((height, i) => (
-                    <div 
-                      key={i}
-                      className="flex-1 bg-indigo-600 rounded-t"
-                      style={{ height: `${height}%` }}
-                    />
-                  ))}
-                </div>
-              </div>
+
 
               {instance.status === 'STOPPED' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                  <p className="text-sm text-blue-900">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
+                  <p className="text-sm text-blue-900 dark:text-blue-200">
                     Instance is stopped. No charges are accruing.
                   </p>
                 </div>
@@ -543,35 +543,77 @@ export default function InstanceDetail() {
               Connect to {instance.name}
             </h3>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-blue-900">
-                <strong>Demo Mode:</strong> This is a demonstration. In a real product, this would open a remote desktop session using RDP, VNC, or a browser-based client.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <Button className="w-full" onClick={() => setShowConnectModal(false)}>
-                <ExternalLink className="w-4 h-4" />
-                Open in Browser (Demo)
-              </Button>
-              <Button variant="secondary" className="w-full" onClick={() => setShowConnectModal(false)}>
-                Download RDP File (Demo)
-              </Button>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-900 mb-2">Demo Credentials</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Username:</span>
-                  <span className="text-gray-900 font-mono">clouddesk</span>
+            {/* Show IP address and Download RDP button for GCP instances with external IP */}
+            {instance.gcpInstanceId && instance.gcpExternalIp ? (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Network className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900 mb-1">Instance IP Address</p>
+                      <p className="text-base font-mono text-blue-900">{instance.gcpExternalIp}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Password:</span>
-                  <span className="text-gray-900 font-mono">••••••••</span>
+
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      downloadRDPFile(instance.name, instance.gcpExternalIp!);
+                      showToast('RDP file downloaded');
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Download RDP File
+                  </Button>
                 </div>
-              </div>
-            </div>
+
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Connection Instructions</p>
+                  <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                    <li>Download the RDP file above</li>
+                    <li>Open the file with Remote Desktop Connection</li>
+                    <li>Use your Windows credentials to log in</li>
+                  </ol>
+                  <p className="text-xs text-gray-500 mt-3">
+                    If you need to reset your Windows password, close this dialog and click "Reset Windows Password".
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-900">
+                    <strong>Demo Mode:</strong> This is a demonstration. In a real product, this would open a remote desktop session using RDP, VNC, or a browser-based client.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Button className="w-full" onClick={() => setShowConnectModal(false)}>
+                    <ExternalLink className="w-4 h-4" />
+                    Open in Browser (Demo)
+                  </Button>
+                  <Button variant="secondary" className="w-full" onClick={() => setShowConnectModal(false)}>
+                    Download RDP File (Demo)
+                  </Button>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Demo Credentials</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Username:</span>
+                      <span className="text-gray-900 font-mono">clouddesk</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Password:</span>
+                      <span className="text-gray-900 font-mono">••••••••</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       )}

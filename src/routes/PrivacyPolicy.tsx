@@ -238,13 +238,16 @@ export function PrivacyPolicy() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Contact Us</h2>
                 <div className="space-y-2 text-gray-600">
                   <p>If you have questions or concerns about this Privacy Policy or our data practices, please contact us:</p>
-                  <div className="mt-4 p-6 bg-gray-50 rounded-lg">
-                    <p><strong>Email:</strong> privacy@clouddesk.edu</p>
-                    <p><strong>Mail:</strong> CloudDesk EDU Privacy Team<br />
-                    123 Cloud Street<br />
-                    San Francisco, CA 94105<br />
-                    United States</p>
-                    <p className="mt-4"><strong>Data Protection Officer:</strong> dpo@clouddesk.edu</p>
+                  <div className="mt-4 p-6 bg-gray-50 rounded-lg space-y-3">
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">Data Protection Officer</p>
+                      <p><strong>Name:</strong> Gabriel Seto Pribadi</p>
+                      <p><strong>Email:</strong> me@gabrielseto.dev</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">General Privacy Inquiries</p>
+                      <p><strong>Email:</strong> privacy@clouddesk.edu</p>
+                    </div>
                   </div>
                 </div>
               </div>

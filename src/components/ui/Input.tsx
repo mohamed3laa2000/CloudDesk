@@ -7,11 +7,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ error = false, className = '', disabled, ...props }: InputProps) {
   const baseStyles =
-    'w-full h-10 px-3 py-2 text-base font-normal text-[var(--color-text-primary)] bg-[var(--color-background)] border rounded-lg transition-colors placeholder:text-[var(--color-text-secondary)] focus:outline-none disabled:bg-[var(--color-surface)] disabled:border-[var(--color-border)] disabled:text-[var(--color-text-secondary)] disabled:cursor-not-allowed'
+    'w-full h-10 px-3 py-2 text-base font-normal text-gray-900 dark:text-gray-50 bg-white dark:bg-slate-700 border rounded-lg transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:outline-none disabled:bg-gray-50 dark:disabled:bg-slate-800 disabled:border-gray-200 dark:disabled:border-slate-700 disabled:text-gray-400 dark:disabled:text-gray-400 disabled:cursor-not-allowed'
 
   const stateStyles = error
-    ? 'border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-0'
-    : 'border-[var(--color-border)] hover:border-[var(--color-text-secondary)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-0'
+    ? 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400 focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 focus:ring-offset-0'
+    : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 focus:border-teal-600 dark:focus:border-teal-400 focus:ring-2 focus:ring-teal-600 dark:focus:ring-teal-400 focus:ring-offset-0'
 
   return (
     <input

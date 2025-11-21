@@ -83,10 +83,10 @@ export function SettingsLayout({
     <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 lg:py-8">
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-1 sm:mb-2">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-1 sm:mb-2">
           Settings
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-100">
           Manage your account settings and preferences
         </p>
       </div>
@@ -120,21 +120,21 @@ export function SettingsLayout({
                     transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2
                     ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                        : 'text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-50'
                     }
                   `}
                   type="button"
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <span className={`flex-shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}>
+                  <span className={`flex-shrink-0 ${isActive ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-400 dark:text-gray-300'}`}>
                     {section.icon}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${isActive ? 'text-indigo-700' : 'text-gray-900'}`}>
+                    <p className={`text-sm font-medium ${isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-gray-50'}`}>
                       {section.label}
                     </p>
-                    <p className={`text-xs mt-0.5 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>
+                    <p className={`text-xs mt-0.5 ${isActive ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-500 dark:text-gray-100'}`}>
                       {section.description}
                     </p>
                   </div>
@@ -147,15 +147,15 @@ export function SettingsLayout({
         {/* Main Content Area */}
         <main className="lg:col-span-9 xl:col-span-9">
           {children || (
-            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4 sm:p-6">
               <div className="text-center py-8 sm:py-12">
-                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 mb-3 sm:mb-4">
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 dark:bg-slate-700 mb-3 sm:mb-4">
                   {SETTINGS_SECTIONS.find(s => s.id === activeSection)?.icon}
                 </div>
-                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">
                   {SETTINGS_SECTIONS.find(s => s.id === activeSection)?.label}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-100">
                   This section will be implemented in upcoming tasks
                 </p>
               </div>

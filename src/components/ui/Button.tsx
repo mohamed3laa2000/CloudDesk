@@ -20,13 +20,13 @@ export function Button({
 
   const variantStyles = {
     primary:
-      'text-white shadow-sm disabled:hover:bg-[var(--color-accent)] focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2',
+      'text-white shadow-sm focus-visible:ring-teal-600 focus-visible:ring-offset-2',
     secondary:
-      'bg-[var(--color-background)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] disabled:hover:bg-[var(--color-background)] focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 border border-[var(--color-border)] hover:border-[var(--color-text-secondary)]',
+      'bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-600 focus-visible:ring-teal-600 focus-visible:ring-offset-2 border border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500',
     ghost:
-      'bg-transparent text-[var(--color-text-primary)] hover:bg-[var(--color-surface)] disabled:hover:bg-transparent focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2',
+      'bg-transparent text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:hover:bg-transparent focus-visible:ring-teal-600 focus-visible:ring-offset-2',
     destructive:
-      'bg-[var(--color-error)] text-white shadow-sm hover:opacity-90 focus-visible:ring-[var(--color-error)] focus-visible:ring-offset-2 disabled:hover:opacity-60',
+      'bg-red-600 dark:bg-red-600 text-white shadow-sm hover:bg-red-700 dark:hover:bg-red-700 focus-visible:ring-red-600 focus-visible:ring-offset-2 disabled:hover:opacity-60',
   }
 
   const sizeStyles = {

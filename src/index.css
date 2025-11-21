@@ -5,7 +5,7 @@
 @layer base {
   /* Base typography and background */
   body {
-    @apply font-sans text-gray-900 bg-gray-50 antialiased;
+    @apply font-sans text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-slate-900 antialiased;
     font-size: 14px;
     line-height: 1.5;
   }

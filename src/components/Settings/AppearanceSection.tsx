@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { usePreferences } from '../../contexts/PreferencesContext';
 import { Button } from '../ui/Button';
 import { ThemeSelector } from './ThemeSelector';
-import { AccentColorPicker } from './AccentColorPicker';
 import type { UserPreferences, ThemeMode } from '../../types/preferences';
 
 /**
@@ -18,7 +17,6 @@ export const AppearanceSection: React.FC = () => {
   
   // Local state for form values (for live preview)
   const [selectedTheme, setSelectedTheme] = useState<ThemeMode>(preferences.theme);
-  const [selectedAccentColor, setSelectedAccentColor] = useState<string>(preferences.accentColor);
   
   // UI state
   const [saving, setSaving] = useState<boolean>(false);
@@ -30,15 +28,13 @@ export const AppearanceSection: React.FC = () => {
   // Sync local state with context preferences
   useEffect(() => {
     setSelectedTheme(preferences.theme);
-    setSelectedAccentColor(preferences.accentColor);
   }, [preferences]);
 
   // Track if there are unsaved changes
   useEffect(() => {
     const themeChanged = selectedTheme !== preferences.theme;
-    const colorChanged = selectedAccentColor !== preferences.accentColor;
-    setHasChanges(themeChanged || colorChanged);
-  }, [selectedTheme, selectedAccentColor, preferences]);
+    setHasChanges(themeChanged);
+  }, [selectedTheme, preferences]);
 
   /**
    * Handle theme selection change
@@ -47,21 +43,7 @@ export const AppearanceSection: React.FC = () => {
   const handleThemeChange = (theme: ThemeMode) => {
     setSelectedTheme(theme);
     // Apply theme immediately for live preview
-    applyTheme(theme, selectedAccentColor);
-    // Clear error when user makes changes
-    if (error) {
-      setError(null);
-    }
-  };
-
-  /**
-   * Handle accent color selection change
-   * Apply color immediately for live preview
-   */
-  const handleAccentColorChange = (color: string) => {
-    setSelectedAccentColor(color);
-    // Apply color immediately for live preview
-    applyTheme(selectedTheme, color);
+    applyTheme(theme, preferences.accentColor);
     // Clear error when user makes changes
     if (error) {
       setError(null);
@@ -89,7 +71,7 @@ export const AppearanceSection: React.FC = () => {
       // Update preferences via context
       const updatedPrefs: Partial<UserPreferences> = {
         theme: selectedTheme,
-        accentColor: selectedAccentColor,
+        accentColor: preferences.accentColor, // Keep existing accent color
       };
       
       await updatePreferences(updatedPrefs);
@@ -108,7 +90,6 @@ export const AppearanceSection: React.FC = () => {
       
       // Revert to saved preferences on error
       setSelectedTheme(preferences.theme);
-      setSelectedAccentColor(preferences.accentColor);
       applyTheme(preferences.theme, preferences.accentColor);
     } finally {
       setSaving(false);
@@ -164,10 +145,10 @@ export const AppearanceSection: React.FC = () => {
     <div className="w-full max-w-2xl">
       {/* Section Header */}
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 sm:mb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-1 sm:mb-2">
           Appearance
         </h2>
-        <p className="text-xs sm:text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100">
           Customize the look and feel of your CloudDesk EDU experience.
         </p>
       </div>
@@ -176,10 +157,10 @@ export const AppearanceSection: React.FC = () => {
       <div className="space-y-6 sm:space-y-8">
         {/* Theme Selector Section */}
         <div>
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-50 mb-2 sm:mb-3">
             Theme
           </h3>
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100 mb-3 sm:mb-4">
             Choose your preferred color scheme or sync with your system settings.
           </p>
           
@@ -190,32 +171,18 @@ export const AppearanceSection: React.FC = () => {
           />
         </div>
 
-        {/* Accent Color Picker Section */}
-        <div>
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">
-            Accent Color
-          </h3>
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-            Choose an accent color to personalize your interface.
-          </p>
-          
-          <AccentColorPicker
-            value={selectedAccentColor}
-            onChange={handleAccentColorChange}
-            disabled={saving || contextLoading}
-          />
-        </div>
+
 
         {/* Success Message */}
         {success && (
           <div
-            className="p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg"
+            className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 rounded-lg"
             role="alert"
             aria-live="polite"
           >
             <div className="flex items-start">
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-300 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -227,10 +194,10 @@ export const AppearanceSection: React.FC = () => {
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-green-800">
+                <p className="text-xs sm:text-sm font-medium text-green-800 dark:text-green-200">
                   Preferences updated successfully
                 </p>
-                <p className="text-xs sm:text-sm text-green-700 mt-1">
+                <p className="text-xs sm:text-sm text-green-700 dark:text-green-200 mt-1">
                   Your appearance settings have been saved.
                 </p>
               </div>
@@ -241,13 +208,13 @@ export const AppearanceSection: React.FC = () => {
         {/* Error Message */}
         {error && (
           <div
-            className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
+            className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-700 rounded-lg"
             role="alert"
             aria-live="assertive"
           >
             <div className="flex items-start">
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-300 mt-0.5 mr-2 sm:mr-3 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -259,17 +226,17 @@ export const AppearanceSection: React.FC = () => {
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-red-800">
+                <p className="text-xs sm:text-sm font-medium text-red-800 dark:text-red-200">
                   Failed to update preferences
                 </p>
-                <p className="text-xs sm:text-sm text-red-700 mt-1">{error}</p>
+                <p className="text-xs sm:text-sm text-red-700 dark:text-red-200 mt-1">{error}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
           <Button
             type="button"
             variant="primary"
@@ -320,7 +287,7 @@ export const AppearanceSection: React.FC = () => {
           </Button>
           
           {hasChanges && !saving && (
-            <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100 text-center sm:text-left">
               You have unsaved changes
             </p>
           )}
@@ -335,14 +302,14 @@ export const AppearanceSection: React.FC = () => {
           aria-modal="true"
           aria-labelledby="reset-dialog-title"
         >
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
             <h3
               id="reset-dialog-title"
-              className="text-base sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2"
+              className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1.5 sm:mb-2"
             >
               Reset to Defaults
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100 mb-4 sm:mb-6">
               Are you sure you want to reset all appearance preferences to their default values? This action cannot be undone.
             </p>
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">

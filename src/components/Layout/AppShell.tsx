@@ -14,7 +14,7 @@ export const AppShell: React.FC<AppShellProps> = ({ showSidebar = true }) => {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       {showSidebar && (
         <>
           <TopNav onMenuClick={toggleSidebar} />

@@ -142,8 +142,8 @@ export default function Usage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       {/* Page Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Usage & Cost</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Usage & Cost</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-100">
           Track your cloud desktop usage and estimated costs. All charges are based on actual runtime.
         </p>
       </div>
@@ -153,44 +153,44 @@ export default function Usage() {
         {/* Total Hours */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
+              <Activity className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Total Hours Used</p>
-          <p className="text-3xl font-semibold text-gray-900 mb-1">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-100 mb-1">Total Hours Used</p>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-1">
             {summary.totalHours.toFixed(1)}
-            <span className="text-lg font-normal text-gray-500 ml-1">hours</span>
+            <span className="text-lg font-normal text-gray-500 dark:text-gray-100 ml-1">hours</span>
           </p>
-          <p className="text-xs text-gray-500">Last 30 days</p>
+          <p className="text-xs text-gray-500 dark:text-gray-100">Last 30 days</p>
         </Card>
 
         {/* Total Cost */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Total Estimated Cost</p>
-          <p className="text-3xl font-semibold text-gray-900 mb-1">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-100 mb-1">Total Estimated Cost</p>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-1">
             ${summary.totalCost.toFixed(2)}
           </p>
-          <p className="text-xs text-gray-500">Based on current usage</p>
+          <p className="text-xs text-gray-500 dark:text-gray-100">Based on current usage</p>
         </Card>
 
         {/* Active Desktops */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <Monitor className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
+              <Monitor className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
             </div>
           </div>
-          <p className="text-sm font-medium text-gray-500 mb-1">Active Desktops</p>
-          <p className="text-3xl font-semibold text-gray-900 mb-1">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-100 mb-1">Active Desktops</p>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-1">
             {summary.activeDesktops}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-100">
             Avg ${summary.averageCostPerDesktop.toFixed(2)} per desktop
           </p>
         </Card>
@@ -198,7 +198,7 @@ export default function Usage() {
 
       {/* Usage Chart Area */}
       <Card className="p-4 sm:p-6 mb-6 sm:mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Usage by Instance</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-6">Usage by Instance</h2>
         
         {/* Simple bar chart visualization */}
         <div className="space-y-4">
@@ -210,7 +210,7 @@ export default function Usage() {
               <div key={row.instanceId} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="font-medium text-gray-900 truncate">
+                    <span className="font-medium text-gray-900 dark:text-gray-50 truncate">
                       {row.instanceName}
                     </span>
                     <Badge 
@@ -227,17 +227,17 @@ export default function Usage() {
                        'Provisioning'}
                     </Badge>
                   </div>
-                  <span className="text-gray-600 ml-4 whitespace-nowrap">
+                  <span className="text-gray-600 dark:text-gray-100 ml-4 whitespace-nowrap">
                     {row.hours.toFixed(1)} hrs
                   </span>
                 </div>
-                <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative h-8 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                   <div 
-                    className="absolute inset-y-0 left-0 bg-indigo-600 rounded-lg transition-all duration-300"
+                    className="absolute inset-y-0 left-0 bg-indigo-600 dark:bg-indigo-500 rounded-lg transition-all duration-300"
                     style={{ width: `${widthPercent}%` }}
                   />
                   <div className="absolute inset-0 flex items-center justify-end px-3">
-                    <span className="text-xs font-medium text-gray-900">
+                    <span className="text-xs font-medium text-gray-900 dark:text-gray-50">
                       ${row.estimatedCost.toFixed(2)}
                     </span>
                   </div>
@@ -248,8 +248,8 @@ export default function Usage() {
           
           {sortedUsage.filter(row => row.hours > 0).length === 0 && (
             <div className="text-center py-12">
-              <Activity className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-600">No usage data for this period</p>
+              <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-600 dark:text-gray-100">No usage data for this period</p>
             </div>
           )}
         </div>
@@ -257,47 +257,47 @@ export default function Usage() {
 
       {/* Detailed Breakdown Table */}
       <Card className="overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Cost by Desktop</h2>
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-600">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Cost by Desktop</h2>
         </div>
         
         {/* Desktop: Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Desktop Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Hours Used
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Compute Cost
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Storage Cost
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-50">
                   Total Cost
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
               {sortedUsage.map((row) => {
                 const instance = instances.find(i => i.id === row.instanceId);
                 return (
-                  <tr key={row.instanceId} className="hover:bg-gray-50 transition-colors">
+                  <tr key={row.instanceId} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
                           {row.instanceName}
                         </span>
                         {instance && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-100">
                             {REGION_NAMES[instance.region]}
                           </span>
                         )}
@@ -318,38 +318,38 @@ export default function Usage() {
                          'Provisioning'}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-900">
+                    <td className="px-6 py-4 text-right text-sm text-gray-900 dark:text-gray-50">
                       {row.hours.toFixed(1)}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">
+                    <td className="px-6 py-4 text-right text-sm text-gray-600 dark:text-gray-100">
                       ${row.computeCost.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">
+                    <td className="px-6 py-4 text-right text-sm text-gray-600 dark:text-gray-100">
                       ${row.storageCost.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                    <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-50">
                       ${row.estimatedCost.toFixed(2)}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+            <tfoot className="bg-gray-50 dark:bg-slate-800 border-t-2 border-gray-300 dark:border-gray-600">
               <tr>
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-gray-50">
                   Total
                 </td>
                 <td className="px-6 py-4"></td>
-                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-50">
                   {summary.totalHours.toFixed(1)}
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-50">
                   ${summary.totalComputeCost.toFixed(2)}
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-50">
                   ${summary.totalStorageCost.toFixed(2)}
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-50">
                   ${summary.totalCost.toFixed(2)}
                 </td>
               </tr>
@@ -362,12 +362,12 @@ export default function Usage() {
           {sortedUsage.map((row) => {
             const instance = instances.find(i => i.id === row.instanceId);
             return (
-              <div key={row.instanceId} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div key={row.instanceId} className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{row.instanceName}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-50 truncate">{row.instanceName}</h3>
                     {instance && (
-                      <p className="text-xs text-gray-500 mt-0.5">{REGION_NAMES[instance.region]}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-100 mt-0.5">{REGION_NAMES[instance.region]}</p>
                     )}
                   </div>
                   <Badge 
@@ -386,20 +386,20 @@ export default function Usage() {
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Hours Used:</span>
-                    <span className="font-medium text-gray-900">{row.hours.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-100">Hours Used:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-50">{row.hours.toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Compute Cost:</span>
-                    <span className="font-medium text-gray-900">${row.computeCost.toFixed(2)}</span>
+                    <span className="text-gray-500 dark:text-gray-100">Compute Cost:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-50">${row.computeCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Storage Cost:</span>
-                    <span className="font-medium text-gray-900">${row.storageCost.toFixed(2)}</span>
+                    <span className="text-gray-500 dark:text-gray-100">Storage Cost:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-50">${row.storageCost.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="text-gray-500 font-medium">Total Cost:</span>
-                    <span className="font-semibold text-gray-900">${row.estimatedCost.toFixed(2)}</span>
+                  <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <span className="text-gray-500 dark:text-gray-100 font-medium">Total Cost:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-50">${row.estimatedCost.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -407,23 +407,23 @@ export default function Usage() {
           })}
           
           {/* Total Summary */}
-          <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg border-2 border-indigo-200 dark:border-indigo-700">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-700 font-medium">Total Hours:</span>
-                <span className="font-semibold text-gray-900">{summary.totalHours.toFixed(1)}</span>
+                <span className="text-gray-700 dark:text-gray-100 font-medium">Total Hours:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-50">{summary.totalHours.toFixed(1)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700 font-medium">Total Compute Cost:</span>
-                <span className="font-semibold text-gray-900">${summary.totalComputeCost.toFixed(2)}</span>
+                <span className="text-gray-700 dark:text-gray-100 font-medium">Total Compute Cost:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-50">${summary.totalComputeCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700 font-medium">Total Storage Cost:</span>
-                <span className="font-semibold text-gray-900">${summary.totalStorageCost.toFixed(2)}</span>
+                <span className="text-gray-700 dark:text-gray-100 font-medium">Total Storage Cost:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-50">${summary.totalStorageCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between pt-2 border-t border-indigo-300">
-                <span className="text-gray-900 font-semibold">Total Cost:</span>
-                <span className="font-bold text-gray-900 text-base">${summary.totalCost.toFixed(2)}</span>
+              <div className="flex justify-between pt-2 border-t border-indigo-300 dark:border-indigo-600">
+                <span className="text-gray-900 dark:text-gray-50 font-semibold">Total Cost:</span>
+                <span className="font-bold text-gray-900 dark:text-gray-50 text-base">${summary.totalCost.toFixed(2)}</span>
               </div>
             </div>
           </div>
