@@ -756,6 +756,680 @@ const updateUserProfile = async (email, profileData) => {
 };
 
 /**
+ * Transform database row from snake_case to camelCase for passkey data
+ * @param {object} row - Database row with snake_case fields
+ * @returns {object} - Transformed object with camelCase fields
+ */
+const transformPasskeyRow = (row) => {
+  if (!row) return null;
+  
+  return {
+    id: row.id,
+    userEmail: row.user_email,
+    credentialId: row.credential_id,
+    publicKey: row.public_key,
+    counter: parseInt(row.counter, 10),
+    aaguid: row.aaguid,
+    transports: row.transports || [],
+    authenticatorType: row.authenticator_type,
+    friendlyName: row.friendly_name,
+    lastUsedAt: row.last_used_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+};
+
+/**
+ * Create a new passkey credential
+ * @param {string} userEmail - User email
+ * @param {object} passkeyData - Passkey credential data
+ * @param {string} passkeyData.credentialId - WebAuthn credential ID (base64url encoded)
+ * @param {string} passkeyData.publicKey - Public key (base64url encoded)
+ * @param {number} passkeyData.counter - Initial signature counter
+ * @param {string} passkeyData.aaguid - Authenticator AAGUID
+ * @param {string[]} passkeyData.transports - Transport types (usb, nfc, ble, internal)
+ * @param {string} passkeyData.authenticatorType - 'platform' or 'cross-platform'
+ * @param {string} [passkeyData.friendlyName] - Optional user-defined name
+ * @returns {Promise<object>} - Created passkey object
+ */
+/**
+ * Validate and sanitize friendly name for passkeys
+ * @param {string} name - The friendly name to validate
+ * @param {boolean} throwOnError - Whether to throw errors or return null
+ * @returns {string|null} - Sanitized name or null if invalid/empty
+ * @throws {Error} - If throwOnError is true and validation fails
+ */
+const validateFriendlyName = (name, throwOnError = false) => {
+  // Reject empty names
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    if (throwOnError) {
+      throw new Error('Friendly name cannot be empty');
+    }
+    return null;
+  }
+
+  // Trim whitespace
+  let sanitized = name.trim();
+
+  // Reject names exceeding 100 characters
+  if (sanitized.length > 100) {
+    if (throwOnError) {
+      throw new Error('Friendly name cannot exceed 100 characters');
+    }
+    return null;
+  }
+
+  // Sanitize special characters - allow alphanumeric, spaces, hyphens, underscores, and common punctuation
+  // Remove control characters and other potentially problematic characters
+  sanitized = sanitized.replace(/[^\w\s\-.,!?()&@#]/g, '');
+
+  // Collapse multiple spaces into single space
+  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+
+  // If sanitization resulted in empty string, reject
+  if (sanitized.length === 0) {
+    if (throwOnError) {
+      throw new Error('Friendly name cannot contain only special characters');
+    }
+    return null;
+  }
+
+  return sanitized;
+};
+
+const createPasskey = async (userEmail, passkeyData) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Generate unique passkey ID
+    const passkeyId = `pk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Validate and sanitize friendly name, or generate default if not provided/invalid
+    const validatedName = validateFriendlyName(passkeyData.friendlyName);
+    const friendlyName = validatedName || 
+      `${passkeyData.authenticatorType === 'platform' ? 'Platform' : 'Security Key'} - ${new Date().toLocaleDateString()}`;
+
+    const query = `
+      INSERT INTO passkeys (
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+    `;
+
+    const values = [
+      passkeyId,
+      userEmail,
+      passkeyData.credentialId,
+      passkeyData.publicKey,
+      passkeyData.counter || 0,
+      passkeyData.aaguid || null,
+      passkeyData.transports || [],
+      passkeyData.authenticatorType,
+      friendlyName
+    ];
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Failed to create passkey');
+    }
+    
+    return transformPasskeyRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating passkey:', error.message);
+    
+    // Check for duplicate credential_id constraint violation
+    if (error.code === '23505' && error.constraint === 'passkeys_credential_id_key') {
+      throw new Error('A passkey with this credential ID already exists');
+    }
+    
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get all passkeys for a user
+ * @param {string} userEmail - User email
+ * @returns {Promise<Array>} - Array of passkey objects
+ */
+const getPasskeysByUser = async (userEmail) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+      FROM passkeys 
+      WHERE user_email = $1
+      ORDER BY created_at DESC
+    `;
+    
+    const result = await pool.query(query, [userEmail]);
+    
+    return result.rows.map(transformPasskeyRow);
+  } catch (error) {
+    console.error('Error getting passkeys by user:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get a passkey by credential ID
+ * @param {string} credentialId - WebAuthn credential ID
+ * @returns {Promise<object|null>} - Passkey object or null if not found
+ */
+const getPasskeyByCredentialId = async (credentialId) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+      FROM passkeys 
+      WHERE credential_id = $1
+    `;
+
+    const result = await pool.query(query, [credentialId]);
+    
+    return result.rows.length > 0 ? transformPasskeyRow(result.rows[0]) : null;
+  } catch (error) {
+    console.error('Error getting passkey by credential ID:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Update passkey signature counter
+ * @param {string} credentialId - WebAuthn credential ID
+ * @param {number} counter - New counter value
+ * @returns {Promise<object>} - Updated passkey object
+ */
+const updatePasskeyCounter = async (credentialId, counter) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      UPDATE passkeys 
+      SET 
+        counter = $1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE credential_id = $2
+      RETURNING 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [counter, credentialId]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Passkey with credential ID ${credentialId} not found`);
+    }
+    
+    return transformPasskeyRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating passkey counter:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Update passkey last used timestamp
+ * @param {string} credentialId - WebAuthn credential ID
+ * @returns {Promise<object>} - Updated passkey object
+ */
+const updatePasskeyLastUsed = async (credentialId) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      UPDATE passkeys 
+      SET 
+        last_used_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE credential_id = $1
+      RETURNING 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [credentialId]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Passkey with credential ID ${credentialId} not found`);
+    }
+    
+    return transformPasskeyRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating passkey last used:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Update passkey friendly name
+ * @param {string} id - Passkey ID
+ * @param {string} name - New friendly name
+ * @returns {Promise<object>} - Updated passkey object
+ */
+const updatePasskeyName = async (id, name) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Validate and sanitize the friendly name (throws on error)
+    const sanitizedName = validateFriendlyName(name, true);
+
+    const query = `
+      UPDATE passkeys 
+      SET 
+        friendly_name = $1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [sanitizedName, id]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Passkey with id ${id} not found`);
+    }
+    
+    return transformPasskeyRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating passkey name:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Delete a passkey
+ * @param {string} id - Passkey ID
+ * @param {string} userEmail - User email (for ownership verification)
+ * @returns {Promise<object>} - Deleted passkey object
+ */
+const deletePasskey = async (id, userEmail) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Delete and return the passkey, but only if it belongs to the user
+    const query = `
+      DELETE FROM passkeys 
+      WHERE id = $1 AND user_email = $2
+      RETURNING 
+        id,
+        user_email,
+        credential_id,
+        public_key,
+        counter,
+        aaguid,
+        transports,
+        authenticator_type,
+        friendly_name,
+        last_used_at,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [id, userEmail]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Passkey with id ${id} not found or does not belong to user`);
+    }
+    
+    const deletedPasskey = transformPasskeyRow(result.rows[0]);
+    
+    // Check if user has any remaining passkeys
+    const remainingPasskeys = await getPasskeysByUser(userEmail);
+    
+    // If no passkeys remain, automatically disable 2FA
+    if (remainingPasskeys.length === 0) {
+      await set2FAStatus(userEmail, false);
+    }
+    
+    return deletedPasskey;
+  } catch (error) {
+    console.error('Error deleting passkey:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get user's 2FA status
+ * @param {string} userEmail - User email
+ * @returns {Promise<object>} - Object with enabled boolean
+ */
+const get2FAStatus = async (userEmail) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT passkey_2fa_enabled
+      FROM approved_users 
+      WHERE email = $1
+    `;
+
+    const result = await pool.query(query, [userEmail]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`User with email ${userEmail} not found`);
+    }
+    
+    return {
+      enabled: result.rows[0].passkey_2fa_enabled || false
+    };
+  } catch (error) {
+    console.error('Error getting 2FA status:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Set user's 2FA status
+ * @param {string} userEmail - User email
+ * @param {boolean} enabled - Whether to enable or disable 2FA
+ * @returns {Promise<object>} - Object with enabled boolean
+ */
+const set2FAStatus = async (userEmail, enabled) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // If enabling 2FA, verify user has at least one passkey
+    if (enabled) {
+      const passkeys = await getPasskeysByUser(userEmail);
+      if (passkeys.length === 0) {
+        throw new Error('Cannot enable 2FA: user must have at least one enrolled passkey');
+      }
+    }
+
+    const query = `
+      UPDATE approved_users 
+      SET 
+        passkey_2fa_enabled = $1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE email = $2
+      RETURNING passkey_2fa_enabled
+    `;
+
+    const result = await pool.query(query, [enabled, userEmail]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`User with email ${userEmail} not found`);
+    }
+    
+    return {
+      enabled: result.rows[0].passkey_2fa_enabled
+    };
+  } catch (error) {
+    console.error('Error setting 2FA status:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Store a WebAuthn challenge
+ * @param {string} challenge - Base64url encoded challenge string
+ * @param {string|null} userEmail - User email (nullable for authentication)
+ * @param {string} type - Challenge type: 'registration' or 'authentication'
+ * @param {Date} expiresAt - Expiration timestamp
+ * @returns {Promise<object>} - Created challenge object
+ */
+const storeChallenge = async (challenge, userEmail, type, expiresAt) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Validate type
+    if (!['registration', 'authentication'].includes(type)) {
+      throw new Error('Challenge type must be either "registration" or "authentication"');
+    }
+
+    const query = `
+      INSERT INTO webauthn_challenges (
+        challenge,
+        user_email,
+        type,
+        expires_at,
+        created_at
+      ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      RETURNING 
+        id,
+        challenge,
+        user_email,
+        type,
+        expires_at,
+        created_at
+    `;
+
+    const values = [
+      challenge,
+      userEmail,
+      type,
+      expiresAt
+    ];
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Failed to store challenge');
+    }
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      challenge: row.challenge,
+      userEmail: row.user_email,
+      type: row.type,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at
+    };
+  } catch (error) {
+    console.error('Error storing challenge:', error.message);
+    
+    // Check for duplicate challenge constraint violation
+    if (error.code === '23505' && error.constraint === 'webauthn_challenges_challenge_key') {
+      throw new Error('A challenge with this value already exists');
+    }
+    
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get a challenge by its value
+ * @param {string} challenge - Base64url encoded challenge string
+ * @returns {Promise<object|null>} - Challenge object or null if not found or expired
+ */
+const getChallenge = async (challenge) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        id,
+        challenge,
+        user_email,
+        type,
+        expires_at,
+        created_at
+      FROM webauthn_challenges 
+      WHERE challenge = $1 AND expires_at > CURRENT_TIMESTAMP
+    `;
+
+    const result = await pool.query(query, [challenge]);
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      challenge: row.challenge,
+      userEmail: row.user_email,
+      type: row.type,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at
+    };
+  } catch (error) {
+    console.error('Error getting challenge:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Delete a challenge by its value
+ * @param {string} challenge - Base64url encoded challenge string
+ * @returns {Promise<boolean>} - True if challenge was deleted, false if not found
+ */
+const deleteChallenge = async (challenge) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      DELETE FROM webauthn_challenges 
+      WHERE challenge = $1
+      RETURNING id
+    `;
+
+    const result = await pool.query(query, [challenge]);
+    
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error deleting challenge:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Clean up expired challenges
+ * @returns {Promise<number>} - Number of challenges deleted
+ */
+const cleanupExpiredChallenges = async () => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      DELETE FROM webauthn_challenges 
+      WHERE expires_at <= CURRENT_TIMESTAMP
+      RETURNING id
+    `;
+
+    const result = await pool.query(query);
+    
+    const deletedCount = result.rows.length;
+    
+    if (deletedCount > 0) {
+      console.log(`Cleaned up ${deletedCount} expired challenge(s)`);
+    }
+    
+    return deletedCount;
+  } catch (error) {
+    console.error('Error cleaning up expired challenges:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
  * Disconnect from the database and close the connection pool
  */
 const disconnect = async () => {
@@ -784,5 +1458,24 @@ module.exports = {
   getUserPreferences,
   updateUserPreferences,
   updateUserProfile,
-  disconnect
+  // Passkey methods
+  createPasskey,
+  getPasskeysByUser,
+  getPasskeyByCredentialId,
+  updatePasskeyCounter,
+  updatePasskeyLastUsed,
+  updatePasskeyName,
+  deletePasskey,
+  get2FAStatus,
+  set2FAStatus,
+  // Challenge methods
+  storeChallenge,
+  getChallenge,
+  deleteChallenge,
+  cleanupExpiredChallenges,
+  disconnect,
+  // Test exports
+  __testExports: {
+    validateFriendlyName
+  }
 };

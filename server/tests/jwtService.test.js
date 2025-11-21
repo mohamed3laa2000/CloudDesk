@@ -1,4 +1,4 @@
-const { generateAccessToken, verifyToken } = require('../services/jwtService');
+const { generateAccessToken, generateTempToken, verifyToken } = require('../services/jwtService');
 const jwt = require('jsonwebtoken');
 
 // Set up test environment
@@ -127,6 +127,71 @@ describe('JWT Service', () => {
       const expectedExp = decoded.iat + 3600; // 3600 seconds = 1 hour
 
       expect(decoded.exp).toBe(expectedExp);
+    });
+  });
+
+  describe('generateTempToken', () => {
+    test('should generate temp token with correct payload structure', () => {
+      const payload = {
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const token = generateTempToken(payload);
+
+      // Verify token is a string
+      expect(typeof token).toBe('string');
+      expect(token.length).toBeGreaterThan(0);
+
+      // Decode token without verification to check structure
+      const decoded = jwt.decode(token);
+      expect(decoded).toHaveProperty('email', payload.email);
+      expect(decoded).toHaveProperty('name', payload.name);
+      expect(decoded).toHaveProperty('temp', true);
+      expect(decoded).toHaveProperty('iat');
+      expect(decoded).toHaveProperty('exp');
+    });
+
+    test('should set temp token expiration to 5 minutes', () => {
+      const payload = {
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const token = generateTempToken(payload);
+      const decoded = jwt.decode(token);
+
+      // Calculate expected expiration (5 minutes from now)
+      const expectedExp = decoded.iat + 300; // 300 seconds = 5 minutes
+
+      expect(decoded.exp).toBe(expectedExp);
+    });
+
+    test('should include temp flag in payload', () => {
+      const payload = {
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const token = generateTempToken(payload);
+      const decoded = verifyToken(token);
+
+      expect(decoded.temp).toBe(true);
+    });
+
+    test('should throw error if JWT_SECRET is not configured', () => {
+      const originalSecret = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+
+      const payload = {
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      expect(() => generateTempToken(payload)).toThrow('JWT_SECRET is not configured');
+
+      // Restore secret
+      process.env.JWT_SECRET = originalSecret;
     });
   });
 });

@@ -56,7 +56,52 @@ Creates the `instances` and `billing_records` tables for storing cloud desktop i
 
 Also creates indexes on user_email, status, created_at for instances, and user_email, instance_id, period for billing_records.
 
+### 004_create_user_preferences.sql
+Creates the `user_preferences` table for storing user-specific settings and preferences.
+
+### 005_create_passkeys_table.sql
+Creates the `passkeys` table for storing WebAuthn passkey credentials:
+
+**passkeys table:**
+- `id` - Unique identifier for the passkey record (VARCHAR 255, PRIMARY KEY)
+- `user_email` - Owner's email (VARCHAR 255, NOT NULL, FOREIGN KEY)
+- `credential_id` - WebAuthn credential ID (TEXT, NOT NULL, UNIQUE)
+- `public_key` - Public key for credential verification (TEXT, NOT NULL)
+- `counter` - Signature counter for replay attack prevention (BIGINT, NOT NULL, DEFAULT 0)
+- `aaguid` - Authenticator Attestation GUID (VARCHAR 36)
+- `transports` - Array of supported transport types (TEXT[])
+- `authenticator_type` - Type of authenticator: platform or cross-platform (VARCHAR 20, NOT NULL)
+- `friendly_name` - User-defined name for the passkey (VARCHAR 100)
+- `last_used_at` - Timestamp when passkey was last used (TIMESTAMP WITH TIME ZONE)
+- `created_at` - Timestamp when passkey was enrolled (TIMESTAMP WITH TIME ZONE)
+- `updated_at` - Timestamp when passkey record was last updated (TIMESTAMP WITH TIME ZONE)
+
+Also creates indexes on user_email and credential_id for query performance.
+
+### 006_create_webauthn_challenges_table.sql
+Creates the `webauthn_challenges` table for storing temporary WebAuthn challenges:
+
+**webauthn_challenges table:**
+- `id` - Serial primary key (SERIAL, PRIMARY KEY)
+- `challenge` - Cryptographically random challenge value (TEXT, NOT NULL, UNIQUE)
+- `user_email` - Email of the user associated with this challenge (VARCHAR 255, nullable, FOREIGN KEY)
+- `type` - Type of ceremony: registration or authentication (VARCHAR 20, NOT NULL)
+- `expires_at` - Timestamp when challenge expires (TIMESTAMP WITH TIME ZONE, NOT NULL)
+- `created_at` - Timestamp when challenge was generated (TIMESTAMP WITH TIME ZONE)
+
+Also creates indexes on challenge and expires_at for query performance and challenge validation.
+
+### 007_add_passkey_2fa_enabled.sql
+Adds the `passkey_2fa_enabled` column to the `approved_users` table:
+
+**Column added:**
+- `passkey_2fa_enabled` - Boolean flag indicating whether passkey 2FA is required after Google login (BOOLEAN, DEFAULT FALSE)
+
+Also adds a comment describing the column's purpose.
+
 ## Running Migrations
+
+### Run All Migrations
 
 Execute all migrations:
 ```bash
@@ -67,6 +112,46 @@ Or run directly:
 ```bash
 node migrations/runMigration.js
 ```
+
+### Run Passkey Migrations Only
+
+If you only need to set up passkey authentication tables, you can run the passkey-specific migrations:
+
+```bash
+npm run migrate:passkey
+```
+
+Or run directly:
+```bash
+node migrations/runPasskeyMigrations.js
+```
+
+This will execute the following migrations:
+- `005_create_passkeys_table.sql` - Creates the passkeys table for storing WebAuthn credentials
+- `006_create_webauthn_challenges_table.sql` - Creates the challenges table for temporary challenge storage
+- `007_add_passkey_2fa_enabled.sql` - Adds the 2FA flag to the approved_users table
+
+The script will also verify that all tables and columns were created successfully.
+
+### Test Passkey Migrations
+
+To verify that passkey migrations were applied correctly and test the database schema:
+
+```bash
+npm run migrate:test
+```
+
+Or run directly:
+```bash
+node migrations/testPasskeyMigrations.js
+```
+
+This test script will:
+- Verify all passkey tables exist with correct structure
+- Test inserting, querying, updating, and deleting sample data
+- Verify foreign key constraints are in place
+- Check that the 2FA column exists in approved_users table
+- Clean up all test data automatically
 
 ## Running Seeds
 

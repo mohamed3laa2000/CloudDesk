@@ -4,6 +4,9 @@ import { apiService } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input, Label, HelperText } from '../ui/Input';
 import type { ProfileUpdateData } from '../../types/preferences';
+import { PasskeyEnrollment } from './PasskeyEnrollment';
+import { PasskeyList } from './PasskeyList';
+import { Passkey2FAToggle } from './Passkey2FAToggle';
 
 /**
  * ProfileSection Component
@@ -20,6 +23,9 @@ export const ProfileSection: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [passkeyRefreshKey, setPasskeyRefreshKey] = useState<number>(0);
+  const [hasPasskeys, setHasPasskeys] = useState<boolean>(false);
+  const [isWebAuthnSupported, setIsWebAuthnSupported] = useState<boolean>(false);
 
   // Initialize name from user context
   useEffect(() => {
@@ -28,10 +34,43 @@ export const ProfileSection: React.FC = () => {
     }
   }, [user]);
 
+  // Check WebAuthn support on mount
+  useEffect(() => {
+    const checkWebAuthnSupport = async () => {
+      try {
+        const passkeyService = (await import('../../services/passkeyService')).default;
+        setIsWebAuthnSupported(passkeyService.isWebAuthnSupported());
+      } catch (err) {
+        console.error('Error checking WebAuthn support:', err);
+        setIsWebAuthnSupported(false);
+      }
+    };
+    checkWebAuthnSupport();
+  }, []);
+
   // Track if there are unsaved changes
   useEffect(() => {
     setHasChanges(name !== user?.name && name.trim() !== '');
   }, [name, user?.name]);
+
+  /**
+   * Check if user has passkeys
+   */
+  const checkPasskeys = async () => {
+    try {
+      const passkeyService = (await import('../../services/passkeyService')).default;
+      const passkeys = await passkeyService.listPasskeys();
+      setHasPasskeys(passkeys.length > 0);
+    } catch (err) {
+      console.error('Error checking passkeys:', err);
+      setHasPasskeys(false);
+    }
+  };
+
+  // Check passkeys on mount and when refresh key changes
+  useEffect(() => {
+    checkPasskeys();
+  }, [passkeyRefreshKey]);
 
   /**
    * Handle form submission
@@ -262,6 +301,75 @@ export const ProfileSection: React.FC = () => {
           )}
         </div>
       </form>
+
+      {/* Passkey Management Section */}
+      <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-gray-200 dark:border-gray-600">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-50 mb-1 sm:mb-2">
+            Passkey Authentication
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100">
+            Use biometrics or security keys for secure, passwordless authentication.
+          </p>
+        </div>
+
+        {!isWebAuthnSupported ? (
+          /* WebAuthn Not Supported Message */
+          <div
+            className="p-4 sm:p-5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg"
+            role="alert"
+          >
+            <div className="flex items-start">
+              <svg
+                className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Passkeys Not Available
+                </p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  Your browser doesn't support passkey authentication. To use passkeys, please update to the latest version of Chrome, Firefox, Safari, or Edge.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <PasskeyEnrollment
+              userEmail={user.email}
+              onEnrollmentComplete={() => setPasskeyRefreshKey(prev => prev + 1)}
+            />
+
+            <div className="mt-8 sm:mt-12">
+              <PasskeyList
+                key={passkeyRefreshKey}
+                userEmail={user.email}
+                onPasskeyDeleted={() => setPasskeyRefreshKey(prev => prev + 1)}
+              />
+            </div>
+
+            {/* 2FA Toggle Section */}
+            <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-gray-200 dark:border-gray-600">
+              <Passkey2FAToggle
+                userEmail={user.email}
+                hasPasskeys={hasPasskeys}
+                onToggleChange={() => {
+                  // Optionally handle toggle change
+                }}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

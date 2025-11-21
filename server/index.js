@@ -45,6 +45,24 @@ try {
 (async () => {
   try {
     await dbService.connect();
+    
+    // Start periodic cleanup of expired challenges
+    // Run every 5 minutes to clean up expired challenges
+    const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    setInterval(async () => {
+      try {
+        await dbService.cleanupExpiredChallenges();
+      } catch (error) {
+        console.error('Error during periodic challenge cleanup:', error.message);
+      }
+    }, CLEANUP_INTERVAL);
+    
+    // Run initial cleanup on startup
+    try {
+      await dbService.cleanupExpiredChallenges();
+    } catch (error) {
+      console.error('Error during initial challenge cleanup:', error.message);
+    }
   } catch (error) {
     console.error('Failed to connect to database:', error.message);
     process.exit(1);

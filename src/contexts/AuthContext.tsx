@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { apiService } from '../services/api';
 import { signOut as firebaseSignOut } from '../services/firebase';
+import { passkeyService } from '../services/passkeyService';
 
 /**
  * User interface representing authenticated user data
@@ -19,6 +20,8 @@ export interface AuthContextValue {
   error: string | null;
   isAuthenticated: boolean;
   login: (idToken: string) => Promise<void>;
+  loginWithPasskey: () => Promise<void>;
+  complete2FA: (tempToken: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -75,6 +78,82 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
+      setUser(null);
+      setIsAuthenticated(false);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Login with passkey - authenticates using WebAuthn passkey
+   * @throws Error if passkey authentication fails
+   */
+  const loginWithPasskey = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Authenticate with passkey using WebAuthn
+      const { accessToken, user: userData } = await passkeyService.authenticateWithPasskey();
+
+      // Store JWT in localStorage for persistence across page refreshes
+      localStorage.setItem('accessToken', accessToken);
+
+      // Store JWT in Authorization header for future requests
+      apiService.setAuthToken(accessToken);
+
+      // Update user state
+      setUser({
+        email: userData.email,
+        name: userData.name,
+      });
+
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      console.error('Passkey login error:', err);
+      setError(err.message || 'Passkey authentication failed. Please try again.');
+      setUser(null);
+      setIsAuthenticated(false);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Complete 2FA authentication with passkey after Google login
+   * @param tempToken - Temporary token received from Google login when 2FA is enabled
+   * @throws Error if 2FA passkey authentication fails
+   */
+  const complete2FA = async (tempToken: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Set temp token in Authorization header for the 2FA flow
+      apiService.setAuthToken(tempToken);
+
+      // Authenticate with passkey using WebAuthn
+      const { accessToken, user: userData } = await passkeyService.authenticateWithPasskey();
+
+      // Store full JWT in localStorage for persistence across page refreshes
+      localStorage.setItem('accessToken', accessToken);
+
+      // Store full JWT in Authorization header for future requests
+      apiService.setAuthToken(accessToken);
+
+      // Update user state
+      setUser({
+        email: userData.email,
+        name: userData.name,
+      });
+
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      console.error('2FA passkey authentication error:', err);
+      setError(err.message || '2FA authentication failed. Please try again.');
       setUser(null);
       setIsAuthenticated(false);
       throw err;
@@ -211,6 +290,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
     isAuthenticated,
     login,
+    loginWithPasskey,
+    complete2FA,
     logout,
     updateUser,
   };

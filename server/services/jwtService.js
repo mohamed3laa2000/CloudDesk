@@ -37,6 +37,38 @@ const generateAccessToken = (payload) => {
 };
 
 /**
+ * Generate a temporary token for 2FA flow with 5 minute expiration
+ * @param {Object} payload - Token payload containing email and name
+ * @param {string} payload.email - User email address
+ * @param {string} payload.name - User display name
+ * @returns {string} Signed temporary JWT token
+ * @throws {Error} If JWT_SECRET is not configured
+ */
+const generateTempToken = (payload) => {
+  const secret = process.env.JWT_SECRET;
+  
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  
+  // Generate temporary token with 5 minute expiration and temp flag
+  const token = jwt.sign(
+    {
+      email: payload.email,
+      name: payload.name,
+      temp: true // Flag to indicate this is a temporary token requiring 2FA completion
+    },
+    secret,
+    {
+      algorithm: 'HS256',
+      expiresIn: '5m'
+    }
+  );
+  
+  return token;
+};
+
+/**
  * Verify and decode a JWT token
  * @param {string} token - JWT token to verify
  * @returns {Object} Decoded token payload
@@ -70,5 +102,6 @@ const verifyToken = (token) => {
 
 module.exports = {
   generateAccessToken,
+  generateTempToken,
   verifyToken
 };

@@ -117,6 +117,9 @@ export function APIReference() {
                   <a href="#authentication" className="block text-sm text-gray-600 hover:text-gray-900">
                     Authentication
                   </a>
+                  <a href="#passkeys" className="block text-sm text-gray-600 hover:text-gray-900">
+                    Passkeys
+                  </a>
                   <a href="#instances" className="block text-sm text-indigo-600 hover:text-indigo-700">
                     Instances
                   </a>
@@ -156,6 +159,347 @@ export function APIReference() {
                   <p className="text-sm text-gray-600">
                     Get your API key from the <Link to="/dashboard" className="text-indigo-600 hover:text-indigo-700">Dashboard → Settings → API Keys</Link>
                   </p>
+                </Card>
+              </div>
+
+              {/* Passkeys */}
+              <div id="passkeys">
+                <Card className="p-8">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                    Passkeys (WebAuthn)
+                  </h2>
+                  <p className="text-gray-600 mb-6">
+                    Manage WebAuthn passkey authentication for passwordless login and two-factor authentication.
+                  </p>
+
+                  {/* Register Options */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="info">POST</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/register-options</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Generate WebAuthn registration options for enrolling a new passkey. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl -X POST https://api.clouddesk.edu/api/auth/passkey/register-options \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN" \<br/>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+                        &nbsp;&nbsp;-d '&#123;<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"authenticatorType": "platform"<br/>
+                        &nbsp;&nbsp;&#125;'
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">authenticatorType</code> (string, required) - Either "platform" (biometric) or "cross-platform" (security key)</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"options": &#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"challenge": "base64-encoded-challenge",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"rp": &#123; "name": "CloudDesk", "id": "clouddesk.edu" &#125;,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"user": &#123; "id": "...", "name": "...", "displayName": "..." &#125;,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"pubKeyCredParams": [...],<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"timeout": 60000,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"authenticatorSelection": &#123;...&#125;,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"excludeCredentials": [...]<br/>
+                          &nbsp;&nbsp;&#125;<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Register Verify */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="info">POST</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/register-verify</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Verify WebAuthn registration response and store the passkey. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">credential</code> (object, required) - WebAuthn PublicKeyCredential from navigator.credentials.create()</li>
+                        <li><code className="text-indigo-600">friendlyName</code> (string, optional) - Custom name for the passkey (max 100 chars)</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (201 Created):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"passkey": &#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"id": "pk_abc123",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"credentialId": "base64-encoded-id",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"authenticatorType": "platform",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"friendlyName": "My MacBook Touch ID",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"createdAt": "2025-01-15T10:30:00Z"<br/>
+                          &nbsp;&nbsp;&#125;<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Login Options */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="info">POST</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/login-options</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Generate WebAuthn authentication options for passkey login. Public endpoint (no authentication required).
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl -X POST https://api.clouddesk.edu/api/auth/passkey/login-options \<br/>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+                        &nbsp;&nbsp;-d '&#123;&#125;'
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">userEmail</code> (string, optional) - User email for 2FA flow (from temp token)</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"options": &#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"challenge": "base64-encoded-challenge",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"rpId": "clouddesk.edu",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"allowCredentials": [...],<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"timeout": 60000,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"userVerification": "preferred"<br/>
+                          &nbsp;&nbsp;&#125;<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Login Verify */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="info">POST</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/login-verify</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Verify WebAuthn authentication response and generate JWT. Public endpoint (no authentication required).
+                    </p>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">credential</code> (object, required) - WebAuthn PublicKeyCredential from navigator.credentials.get()</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"accessToken": "jwt-token-here",<br/>
+                          &nbsp;&nbsp;"user": &#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"email": "user@example.com",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"name": "John Doe"<br/>
+                          &nbsp;&nbsp;&#125;<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List Passkeys */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="success">GET</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/list</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      List all passkeys enrolled by the authenticated user. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl https://api.clouddesk.edu/api/auth/passkey/list \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN"
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"passkeys": [<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"id": "pk_abc123",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"authenticatorType": "platform",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"friendlyName": "My MacBook Touch ID",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"lastUsedAt": "2025-01-15T10:30:00Z",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"createdAt": "2025-01-10T08:00:00Z"<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;&#125;<br/>
+                          &nbsp;&nbsp;]<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delete Passkey */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="error">DELETE</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/:id</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Delete a passkey. Automatically disables 2FA if this is the last passkey. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl -X DELETE https://api.clouddesk.edu/api/auth/passkey/pk_abc123 \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN"
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"message": "Passkey deleted successfully"<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Update Passkey Name */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="warning">PATCH</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/:id/name</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Update the friendly name of a passkey. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl -X PATCH https://api.clouddesk.edu/api/auth/passkey/pk_abc123/name \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN" \<br/>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+                        &nbsp;&nbsp;-d '&#123;<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"name": "My New Passkey Name"<br/>
+                        &nbsp;&nbsp;&#125;'
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">name</code> (string, required) - New friendly name (max 100 characters)</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"passkey": &#123;<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"id": "pk_abc123",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"authenticatorType": "platform",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"friendlyName": "My New Passkey Name",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"lastUsedAt": "2025-01-15T10:30:00Z",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"createdAt": "2025-01-10T08:00:00Z",<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;"updatedAt": "2025-01-16T14:20:00Z"<br/>
+                          &nbsp;&nbsp;&#125;<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Get 2FA Status */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="success">GET</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/2fa-status</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Get the user's 2FA passkey status. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl https://api.clouddesk.edu/api/auth/passkey/2fa-status \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN"
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"enabled": true<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Set 2FA Status */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Badge variant="warning">PUT</Badge>
+                      <code className="text-sm font-mono text-gray-900">/api/auth/passkey/2fa-status</code>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Enable or disable 2FA passkey mode. Requires at least one enrolled passkey to enable. Requires JWT authentication.
+                    </p>
+                    <div className="bg-gray-900 rounded-lg p-6 mb-4">
+                      <code className="text-sm text-emerald-400">
+                        curl -X PUT https://api.clouddesk.edu/api/auth/passkey/2fa-status \<br/>
+                        &nbsp;&nbsp;-H "Authorization: Bearer YOUR_JWT_TOKEN" \<br/>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+                        &nbsp;&nbsp;-d '&#123;<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"enabled": true<br/>
+                        &nbsp;&nbsp;&#125;'
+                      </code>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Request Body:</p>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li><code className="text-indigo-600">enabled</code> (boolean, required) - Whether to enable or disable 2FA</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-gray-900 mb-2">Response (200 OK):</p>
+                      <div className="bg-gray-900 rounded-lg p-4 mt-2">
+                        <code className="text-xs text-emerald-400">
+                          &#123;<br/>
+                          &nbsp;&nbsp;"success": true,<br/>
+                          &nbsp;&nbsp;"enabled": true<br/>
+                          &#125;
+                        </code>
+                      </div>
+                    </div>
+                  </div>
                 </Card>
               </div>
 
@@ -507,14 +851,14 @@ export function APIReference() {
                     <Badge variant="error">401</Badge>
                     <div>
                       <p className="font-medium text-gray-900">Unauthorized</p>
-                      <p className="text-sm text-gray-600">Invalid or missing API key</p>
+                      <p className="text-sm text-gray-600">Invalid or missing API key / JWT token</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
                     <Badge variant="error">403</Badge>
                     <div>
                       <p className="font-medium text-gray-900">Forbidden</p>
-                      <p className="text-sm text-gray-600">Valid API key but insufficient permissions</p>
+                      <p className="text-sm text-gray-600">Valid credentials but insufficient permissions</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -522,6 +866,13 @@ export function APIReference() {
                     <div>
                       <p className="font-medium text-gray-900">Not Found</p>
                       <p className="text-sm text-gray-600">Resource doesn't exist</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <Badge variant="warning">409</Badge>
+                    <div>
+                      <p className="font-medium text-gray-900">Conflict</p>
+                      <p className="text-sm text-gray-600">Resource already exists (e.g., duplicate passkey)</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -538,9 +889,16 @@ export function APIReference() {
                       <p className="text-sm text-gray-600">Something went wrong on our end</p>
                     </div>
                   </div>
+                  <div className="flex items-start gap-4">
+                    <Badge variant="error">503</Badge>
+                    <div>
+                      <p className="font-medium text-gray-900">Service Unavailable</p>
+                      <p className="text-sm text-gray-600">Database or service temporarily unavailable</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-900 rounded-lg p-6">
-                  <p className="text-sm text-gray-400 mb-2">Error Response Format:</p>
+                <div className="bg-gray-900 rounded-lg p-6 mb-6">
+                  <p className="text-sm text-gray-400 mb-2">Standard Error Response Format:</p>
                   <code className="text-sm text-emerald-400">
                     &#123;<br/>
                     &nbsp;&nbsp;"error": &#123;<br/>
@@ -548,6 +906,71 @@ export function APIReference() {
                     &nbsp;&nbsp;&nbsp;&nbsp;"message": "Missing required parameter: name",<br/>
                     &nbsp;&nbsp;&nbsp;&nbsp;"param": "name"<br/>
                     &nbsp;&nbsp;&#125;<br/>
+                    &#125;
+                  </code>
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 mt-8">
+                  Passkey-Specific Error Codes
+                </h3>
+                <div className="space-y-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-2">Registration Errors</p>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li><code className="text-red-600">400</code> - Invalid or expired challenge</li>
+                      <li><code className="text-red-600">400</code> - Invalid credential format</li>
+                      <li><code className="text-red-600">400</code> - Challenge has expired (5 minute timeout)</li>
+                      <li><code className="text-red-600">400</code> - Challenge does not match user session</li>
+                      <li><code className="text-red-600">400</code> - Registration verification failed</li>
+                      <li><code className="text-red-600">409</code> - This authenticator is already registered</li>
+                      <li><code className="text-red-600">500</code> - Failed to store passkey</li>
+                      <li><code className="text-red-600">503</code> - Database service temporarily unavailable</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-2">Authentication Errors</p>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li><code className="text-red-600">401</code> - Invalid or expired challenge</li>
+                      <li><code className="text-red-600">401</code> - Challenge mismatch</li>
+                      <li><code className="text-red-600">401</code> - Passkey not recognized</li>
+                      <li><code className="text-red-600">401</code> - Invalid passkey signature</li>
+                      <li><code className="text-red-600">401</code> - Passkey may be cloned. Please contact support.</li>
+                      <li><code className="text-red-600">403</code> - Account not authorized</li>
+                      <li><code className="text-red-600">500</code> - Failed to generate access token</li>
+                      <li><code className="text-red-600">503</code> - Database service temporarily unavailable</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-2">Management Errors</p>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li><code className="text-red-600">400</code> - Passkey ID is required</li>
+                      <li><code className="text-red-600">400</code> - Name is required and must be a string</li>
+                      <li><code className="text-red-600">400</code> - Name cannot be empty</li>
+                      <li><code className="text-red-600">400</code> - Name must be 100 characters or less</li>
+                      <li><code className="text-red-600">404</code> - Passkey not found</li>
+                      <li><code className="text-red-600">503</code> - Database service temporarily unavailable</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="font-medium text-gray-900 mb-2">2FA Errors</p>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li><code className="text-red-600">400</code> - enabled must be a boolean value</li>
+                      <li><code className="text-red-600">400</code> - Cannot enable 2FA without at least one enrolled passkey</li>
+                      <li><code className="text-red-600">503</code> - Database service temporarily unavailable</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 rounded-lg p-6 mt-6">
+                  <p className="text-sm text-gray-400 mb-2">Passkey Error Response Format:</p>
+                  <code className="text-sm text-emerald-400">
+                    &#123;<br/>
+                    &nbsp;&nbsp;"success": false,<br/>
+                    &nbsp;&nbsp;"error": "Bad Request",<br/>
+                    &nbsp;&nbsp;"message": "Invalid or expired challenge"<br/>
                     &#125;
                   </code>
                 </div>

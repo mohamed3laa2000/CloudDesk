@@ -44,6 +44,17 @@ npm start
 - `POST /api/auth/verify` - Verify JWT token
 - `GET /api/health` - Health check
 
+### Passkey Authentication
+- `POST /api/auth/passkey/register-options` - Get WebAuthn registration options
+- `POST /api/auth/passkey/register-verify` - Verify and store new passkey
+- `POST /api/auth/passkey/login-options` - Get WebAuthn authentication options
+- `POST /api/auth/passkey/login-verify` - Verify passkey and issue JWT
+- `GET /api/auth/passkey/list` - List user's enrolled passkeys
+- `DELETE /api/auth/passkey/:id` - Delete a passkey
+- `PATCH /api/auth/passkey/:id/name` - Update passkey friendly name
+- `GET /api/auth/passkey/2fa-status` - Get 2FA mode status
+- `PUT /api/auth/passkey/2fa-status` - Enable/disable 2FA mode
+
 ### Instance Management
 - `GET /api/instances` - List all instances for authenticated user
 - `POST /api/instances` - Create new instance (provisions GCP VM if enabled)
@@ -51,6 +62,154 @@ npm start
 - `PATCH /api/instances/:id/status` - Update instance status (start/stop)
 - `DELETE /api/instances/:id` - Delete instance (removes GCP VM if applicable)
 - `POST /api/instances/:id/reset-password` - Reset Windows password (GCP only)
+
+## WebAuthn / Passkey Authentication
+
+CloudDesk supports passwordless authentication using WebAuthn passkeys. Users can authenticate using:
+- **Platform authenticators**: Built-in biometrics (Face ID, Touch ID, Windows Hello)
+- **Cross-platform authenticators**: Security keys (YubiKey, Titan Key)
+
+### Features
+
+- **Standalone passkey login**: Sign in using only a passkey (no password required)
+- **2FA mode**: Require passkey verification after Google OAuth login
+- **Passkey management**: Enroll, rename, and delete passkeys from profile settings
+- **Multiple passkeys**: Users can register multiple authenticators
+- **Phishing-resistant**: Public key cryptography prevents credential theft
+
+### Configuration
+
+WebAuthn requires three environment variables in `server/.env`:
+
+```env
+# Relying Party ID - must match your domain
+RP_ID=localhost                    # Development
+# RP_ID=example.com                # Production
+
+# Relying Party Name - shown to users during enrollment
+RP_NAME=CloudDesk
+
+# Expected Origin - complete URL with protocol
+ORIGIN=http://localhost:5173       # Development
+# ORIGIN=https://example.com       # Production
+```
+
+**Important Configuration Rules:**
+
+1. **RP_ID** must match your domain:
+   - Development: `localhost`
+   - Production: `example.com` or `app.example.com`
+   - Cannot include protocol or port
+   - Changing this invalidates all existing passkeys
+
+2. **ORIGIN** must match the browser URL exactly:
+   - Must include protocol (`http://` or `https://`)
+   - Must include port for non-standard ports
+   - Production must use HTTPS (WebAuthn requires secure context)
+
+3. **RP_NAME** is displayed to users:
+   - Should be your application or company name
+   - Shown in browser prompts and authenticator interfaces
+
+### Development vs Production
+
+**Development Setup:**
+```env
+RP_ID=localhost
+RP_NAME=CloudDesk Dev
+ORIGIN=http://localhost:5173
+```
+
+**Production Setup:**
+```env
+RP_ID=yourdomain.com
+RP_NAME=CloudDesk
+ORIGIN=https://yourdomain.com
+```
+
+### Database Schema
+
+Passkey authentication requires two additional tables:
+
+**passkeys table:**
+- Stores user credentials (public keys, counters, metadata)
+- One user can have multiple passkeys
+- Includes friendly names for easy identification
+
+**webauthn_challenges table:**
+- Temporary storage for authentication challenges
+- Challenges expire after 5 minutes
+- Prevents replay attacks
+
+Run migrations to create these tables:
+```bash
+npm run migrate
+```
+
+### Security Features
+
+- **Challenge-response authentication**: Prevents replay attacks
+- **Counter validation**: Detects cloned authenticators
+- **Origin verification**: Prevents cross-origin attacks
+- **Signature validation**: Cryptographic proof of possession
+- **User verification**: Requires biometric or PIN
+
+### Browser Support
+
+WebAuthn is supported in:
+- Chrome/Edge 67+
+- Firefox 60+
+- Safari 13+
+- Mobile browsers (iOS 14+, Android Chrome)
+
+The application automatically detects WebAuthn support and hides passkey options in unsupported browsers.
+
+**For detailed browser compatibility information**, including:
+- Platform authenticator requirements (Touch ID, Windows Hello, etc.)
+- Security key compatibility
+- Troubleshooting guide
+- Update instructions
+
+See the comprehensive [Browser Compatibility Guide](../docs/passkey-browser-compatibility.md).
+
+### Testing
+
+Run passkey-related tests:
+```bash
+# Unit tests
+npm test -- webauthnService.test.js
+npm test -- passkeyController.test.js
+
+# Integration tests
+npm test -- passkeyRegistration.integration.test.js
+npm test -- passkeyAuthentication.integration.test.js
+npm test -- passkeyManagement.integration.test.js
+
+# Property-based tests
+npm test -- passkeyController.property.test.js
+```
+
+### Troubleshooting
+
+**"WebAuthn not supported"**
+- Ensure you're using HTTPS in production
+- Check browser compatibility
+- Verify secure context (localhost or HTTPS)
+
+**"Origin mismatch"**
+- Verify ORIGIN matches browser URL exactly
+- Include protocol and port
+- Check for trailing slashes
+
+**"RP_ID mismatch"**
+- Ensure RP_ID matches domain (without protocol)
+- Cannot use IP addresses in production
+- Subdomains must match exactly
+
+**"Challenge expired"**
+- Challenges expire after 5 minutes
+- User must complete authentication promptly
+- Check server time synchronization
 
 ## Database Migrations
 

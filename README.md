@@ -21,6 +21,8 @@ CloudDesk EDU is a modern, enterprise-grade SaaS platform that provides instant 
 
 ### 🔐 Authentication & Security
 - **Firebase Authentication**: Secure Google OAuth integration
+- **WebAuthn Passkey Authentication**: Passwordless login with biometrics or security keys
+- **2FA Mode**: Optional passkey verification after Google login for enhanced security
 - **JWT Token Management**: Stateless authentication with secure token handling
 - **Domain Restriction**: Universitas Brawijaya (@ub.ac.id) email validation
 - **Protected Routes**: Automatic authentication guards for secure pages
@@ -350,12 +352,156 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
 
+# WebAuthn / Passkey Authentication
+RP_ID=localhost                    # Must match your domain (use 'localhost' for dev)
+RP_NAME=CloudDesk                  # Displayed to users during passkey enrollment
+ORIGIN=http://localhost:5173       # Complete URL with protocol (use HTTPS in production)
+
 # GCP Compute Engine Integration (Optional)
 GCP_PROJECT_ID=your-gcp-project-id
 GCP_ENABLED=false  # Set to true to enable real VM provisioning
 ```
 
 **Important**: Never commit `.env` files to version control. They are already included in `.gitignore`.
+
+### WebAuthn / Passkey Authentication
+
+CloudDesk EDU supports passwordless authentication using WebAuthn passkeys. Users can sign in using biometrics (Face ID, Touch ID, Windows Hello) or security keys (YubiKey, Titan Key).
+
+#### Features
+
+- **Standalone Passkey Login**: Sign in using only a passkey without Google OAuth
+- **2FA Mode**: Require passkey verification after Google login for enhanced security
+- **Multiple Authenticators**: Users can register multiple passkeys (platform and cross-platform)
+- **Passkey Management**: Enroll, rename, and delete passkeys from profile settings
+- **Phishing-Resistant**: Public key cryptography prevents credential theft and phishing
+
+#### Configuration
+
+WebAuthn requires three environment variables in `server/.env`:
+
+```env
+# Relying Party ID - must match your domain
+RP_ID=localhost                    # Development
+# RP_ID=example.com                # Production
+
+# Relying Party Name - shown to users
+RP_NAME=CloudDesk
+
+# Expected Origin - complete URL with protocol
+ORIGIN=http://localhost:5173       # Development
+# ORIGIN=https://example.com       # Production (MUST use HTTPS)
+```
+
+#### Configuration Rules
+
+**RP_ID (Relying Party ID):**
+- Must match your domain name (without protocol or port)
+- Development: `localhost`
+- Production: `example.com` or `app.example.com`
+- Cannot include `http://`, `https://`, or port numbers
+- **CRITICAL**: Changing this value invalidates all existing passkeys
+
+**ORIGIN (Expected Origin):**
+- Must be the complete URL where users access your application
+- Must include protocol (`http://` or `https://`)
+- Must include port for non-standard ports (e.g., `:5173`)
+- Production **MUST** use HTTPS (WebAuthn requires secure context)
+- Must match exactly what appears in the browser address bar
+
+**RP_NAME (Relying Party Name):**
+- Human-readable name displayed to users during passkey enrollment
+- Shown in browser prompts and authenticator interfaces
+- Should be your application or company name
+
+#### Development vs Production Examples
+
+**Development Setup:**
+```env
+RP_ID=localhost
+RP_NAME=CloudDesk Dev
+ORIGIN=http://localhost:5173
+```
+
+**Production Setup (Root Domain):**
+```env
+RP_ID=example.com
+RP_NAME=CloudDesk
+ORIGIN=https://example.com
+```
+
+**Production Setup (Subdomain):**
+```env
+RP_ID=app.example.com
+RP_NAME=CloudDesk
+ORIGIN=https://app.example.com
+```
+
+#### Database Setup
+
+Passkey authentication requires additional database tables. Run migrations to create them:
+
+```bash
+cd server
+npm run migrate
+```
+
+This creates:
+- `passkeys` table - Stores user credentials and metadata
+- `webauthn_challenges` table - Temporary challenge storage (5-minute expiration)
+- `passkey_2fa_enabled` column in `approved_users` table
+
+#### Browser Support
+
+WebAuthn is supported in:
+- ✅ Chrome/Edge 67+
+- ✅ Firefox 60+
+- ✅ Safari 13+
+- ✅ iOS Safari 14+
+- ✅ Android Chrome 70+
+
+The application automatically detects WebAuthn support and gracefully hides passkey options in unsupported browsers.
+
+#### Security Features
+
+- **Challenge-Response**: Cryptographically random challenges prevent replay attacks
+- **Counter Validation**: Detects cloned authenticators by tracking signature counters
+- **Origin Verification**: Prevents cross-origin and phishing attacks
+- **Signature Validation**: Cryptographic proof that user possesses the private key
+- **User Verification**: Requires biometric or PIN for authentication
+- **5-Minute Challenge Expiration**: Prevents stale challenge reuse
+
+#### Troubleshooting
+
+**"WebAuthn not supported" error:**
+- Ensure you're using HTTPS in production (required by WebAuthn spec)
+- Check browser compatibility (see [Browser Compatibility Guide](docs/passkey-browser-compatibility.md))
+- Verify you're in a secure context (localhost or HTTPS)
+- Update to a modern browser: Chrome 67+, Firefox 60+, Safari 13+
+
+**"Origin mismatch" error:**
+- Verify `ORIGIN` environment variable matches browser URL exactly
+- Include protocol (`http://` or `https://`)
+- Include port if non-standard (e.g., `:5173`)
+- Check for trailing slashes (should not be included)
+
+**"RP_ID mismatch" error:**
+- Ensure `RP_ID` matches your domain without protocol
+- Cannot use IP addresses in production
+- Subdomains must match exactly (e.g., `app.example.com` not `example.com`)
+
+**"Challenge expired" error:**
+- Challenges expire after 5 minutes for security
+- User must complete authentication promptly
+- Check server time synchronization (NTP)
+
+**Passkeys not working after deployment:**
+- Verify all three environment variables are set correctly
+- Ensure production uses HTTPS
+- Check that `RP_ID` matches your production domain
+- Review server logs for detailed error messages
+
+For more details, see the [WebAuthn section in server/README.md](server/README.md#webauthn--passkey-authentication).
 
 ### GCP Compute Engine Integration (Optional)
 

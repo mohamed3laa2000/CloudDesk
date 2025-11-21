@@ -6,13 +6,20 @@ import { Loader2 } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuth } from '../contexts/AuthContext';
 import { signInWithGoogle, signInWithGoogleHD } from '../services/firebase';
+import { PasskeyLoginButton } from '../components/Auth/PasskeyLoginButton';
+import { Passkey2FAPrompt } from '../components/Auth/Passkey2FAPrompt';
+import { passkeyService } from '../services/passkeyService';
+import { apiService } from '../services/api';
 
 export default function Login() {
   useDocumentTitle('Sign In');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const [show2FAPrompt, setShow2FAPrompt] = useState(false);
+  const [tempToken, setTempToken] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -36,12 +43,28 @@ export default function Login() {
       // Extract ID token from Firebase auth result
       const idToken = await result.user.getIdToken();
       
-      // Call Auth Context login method with ID token
-      await login(idToken);
+      // Call backend login endpoint directly to check for 2FA
+      const response = await apiService.login(idToken);
       
-      // Redirect to intended destination or dashboard on success
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
-      navigate(redirectTo, { replace: true });
+      // Check if 2FA is required
+      if (response.requires2FA) {
+        // Store temp token and user email, then show 2FA prompt
+        setTempToken(response.tempToken);
+        setUserEmail(response.user.email);
+        setShow2FAPrompt(true);
+      } else {
+        // No 2FA required - complete login normally
+        // Store JWT in localStorage
+        localStorage.setItem('accessToken', response.accessToken);
+        apiService.setAuthToken(response.accessToken);
+        
+        // Redirect to intended destination or dashboard on success
+        const redirectTo = searchParams.get('redirect') || '/dashboard';
+        navigate(redirectTo, { replace: true });
+        
+        // Force reload to update AuthContext
+        window.location.href = redirectTo;
+      }
     } catch (err) {
       // Display appropriate error messages on failure
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
@@ -61,12 +84,28 @@ export default function Login() {
       // Extract ID token from Firebase auth result
       const idToken = await result.user.getIdToken();
       
-      // Call Auth Context login method with ID token
-      await login(idToken);
+      // Call backend login endpoint directly to check for 2FA
+      const response = await apiService.login(idToken);
       
-      // Redirect to intended destination or dashboard on success
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
-      navigate(redirectTo, { replace: true });
+      // Check if 2FA is required
+      if (response.requires2FA) {
+        // Store temp token and user email, then show 2FA prompt
+        setTempToken(response.tempToken);
+        setUserEmail(response.user.email);
+        setShow2FAPrompt(true);
+      } else {
+        // No 2FA required - complete login normally
+        // Store JWT in localStorage
+        localStorage.setItem('accessToken', response.accessToken);
+        apiService.setAuthToken(response.accessToken);
+        
+        // Redirect to intended destination or dashboard on success
+        const redirectTo = searchParams.get('redirect') || '/dashboard';
+        navigate(redirectTo, { replace: true });
+        
+        // Force reload to update AuthContext
+        window.location.href = redirectTo;
+      }
     } catch (err) {
       // Display appropriate error messages on failure
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
@@ -74,6 +113,83 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  /**
+   * Handle successful passkey authentication
+   * @param accessToken - JWT access token from passkey authentication
+   * @param _user - User data from authentication (unused, will be loaded from token)
+   */
+  const handlePasskeySuccess = (accessToken: string, _user: { email: string; name: string }) => {
+    // Store JWT in localStorage for persistence
+    localStorage.setItem('accessToken', accessToken);
+
+    // Set JWT in Authorization header for future requests
+    apiService.setAuthToken(accessToken);
+
+    // Update auth context with user data (without calling login which expects Firebase token)
+    // We'll navigate directly since we already have the JWT
+    
+    // Redirect to intended destination or dashboard
+    const redirectTo = searchParams.get('redirect') || '/dashboard';
+    navigate(redirectTo, { replace: true });
+    
+    // Force a page reload to ensure AuthContext picks up the new token
+    window.location.href = redirectTo;
+  };
+
+  /**
+   * Handle passkey authentication error
+   * @param errorMessage - Error message to display
+   */
+  const handlePasskeyError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
+  /**
+   * Handle successful 2FA passkey authentication
+   * @param accessToken - Full JWT access token after 2FA completion
+   * @param _user - User data from authentication
+   */
+  const handle2FASuccess = async (accessToken: string, _user: { email: string; name: string }) => {
+    try {
+      // Store JWT in localStorage
+      localStorage.setItem('accessToken', accessToken);
+      apiService.setAuthToken(accessToken);
+      
+      // Redirect to intended destination or dashboard
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      navigate(redirectTo, { replace: true });
+      
+      // Force reload to update AuthContext
+      window.location.href = redirectTo;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '2FA authentication failed. Please try again.');
+      setShow2FAPrompt(false);
+    }
+  };
+
+  /**
+   * Handle 2FA prompt cancellation
+   * Returns user to login page
+   */
+  const handle2FACancel = () => {
+    setShow2FAPrompt(false);
+    setTempToken('');
+    setUserEmail('');
+    setError(null);
+  };
+
+  // Show 2FA prompt if required
+  if (show2FAPrompt) {
+    return (
+      <Passkey2FAPrompt
+        tempToken={tempToken}
+        userEmail={userEmail}
+        onSuccess={handle2FASuccess}
+        onCancel={handle2FACancel}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -118,6 +234,27 @@ export default function Login() {
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-800">{error}</p>
                 </div>
+              )}
+
+              {/* Passkey Sign-in Button - Only show if WebAuthn is supported */}
+              {passkeyService.isWebAuthnSupported() && (
+                <>
+                  <PasskeyLoginButton
+                    onSuccess={handlePasskeySuccess}
+                    onError={handlePasskeyError}
+                    disabled={loading}
+                  />
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">or</span>
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Google Sign-in Button */}

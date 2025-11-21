@@ -70,7 +70,46 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Step 5: Generate JWT if email is approved
+    // Step 5: Check if user has 2FA enabled
+    let twoFAStatus;
+    try {
+      twoFAStatus = await dbService.get2FAStatus(email);
+    } catch (error) {
+      console.error('Database error during 2FA status check:', error);
+      return res.status(503).json({
+        success: false,
+        error: 'Service Unavailable',
+        message: 'Database service temporarily unavailable'
+      });
+    }
+
+    // Step 6: If 2FA is enabled, return temp token instead of full JWT
+    if (twoFAStatus.enabled) {
+      let tempToken;
+      try {
+        tempToken = jwtService.generateTempToken({ email, name });
+      } catch (error) {
+        console.error('Error generating temp token:', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Internal Server Error',
+          message: 'Failed to generate temporary token'
+        });
+      }
+
+      // Return temp token and indicate 2FA is required
+      return res.status(200).json({
+        success: true,
+        requires2FA: true,
+        tempToken,
+        user: {
+          email,
+          name
+        }
+      });
+    }
+
+    // Step 7: Generate full JWT if 2FA is not enabled
     let accessToken;
     try {
       accessToken = jwtService.generateAccessToken({ email, name });
@@ -83,7 +122,7 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Step 6: Update last_login timestamp in database
+    // Step 8: Update last_login timestamp in database
     try {
       await dbService.updateLastLogin(email);
     } catch (error) {
@@ -91,7 +130,7 @@ const login = async (req, res, next) => {
       console.error('Error updating last login timestamp:', error);
     }
 
-    // Step 7: Set JWT in httpOnly cookie
+    // Step 9: Set JWT in httpOnly cookie
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
@@ -99,7 +138,7 @@ const login = async (req, res, next) => {
       maxAge: 3600000 // 1 hour in milliseconds
     });
 
-    // Step 8: Return JWT and user data in response
+    // Step 10: Return JWT and user data in response
     return res.status(200).json({
       success: true,
       accessToken,
