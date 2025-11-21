@@ -36,7 +36,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <nav className="fixed top-0 right-0 left-0 lg:left-60 z-40 bg-white border-b border-gray-200 h-16">
+    <nav className="fixed top-0 right-0 left-0 lg:left-60 z-40 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 h-16">
       <div className="px-4 sm:px-6 md:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Hamburger + Page Title + Demo Badge */}
@@ -45,14 +45,14 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
             {onMenuClick && (
               <button
                 onClick={onMenuClick}
-                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 aria-label="Open navigation menu"
               >
                 <Menu className="w-6 h-6" />
               </button>
             )}
             
-            <h1 className="text-base font-semibold text-gray-900 hidden sm:block">
+            <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">
               {location.pathname === '/dashboard' && 'Instances'}
               {location.pathname === '/create' && 'Create Instance'}
               {location.pathname === '/usage' && 'Usage & Billing'}
@@ -74,7 +74,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
           <div className="flex items-center gap-2">
             {/* Help */}
             <Link to="/docs">
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" title="Documentation">
+              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Documentation">
                 <HelpCircle className="w-5 h-5" />
               </button>
             </Link>
@@ -86,7 +86,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                   setShowNotifications(!showNotifications);
                   setShowUserMenu(false);
                 }}
-                className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -96,10 +96,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
-                  <div className="px-4 py-2 border-b border-gray-200">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-2 z-40">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-slate-700">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</h3>
                       {unreadCount > 0 && (
                         <Badge variant="info">{unreadCount} new</Badge>
                       )}
@@ -109,17 +109,17 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                     {notifications.map((notif) => (
                       <button
                         key={notif.id}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                          notif.unread ? 'bg-indigo-50' : ''
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors ${
+                          notif.unread ? 'bg-teal-50 dark:bg-teal-900/20' : ''
                         }`}
                       >
-                        <p className="text-sm font-medium text-gray-900">{notif.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{notif.time}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{notif.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{notif.time}</p>
                       </button>
                     ))}
                   </div>
-                  <div className="px-4 py-2 border-t border-gray-200">
-                    <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                  <div className="px-4 py-2 border-t border-gray-200 dark:border-slate-700">
+                    <button className="text-sm text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
                       View all notifications
                     </button>
                   </div>
@@ -134,7 +134,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                   setShowUserMenu(!showUserMenu);
                   setShowNotifications(false);
                 }}
-                className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
@@ -145,11 +145,11 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
 
               {/* User Dropdown */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-2 z-40">
                   {/* User Info */}
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{user?.email || ''}</p>
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.name || 'User'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{user?.email || ''}</p>
                   </div>
 
                   {/* Menu Items */}
@@ -157,7 +157,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                     {!isDemo && (
                       <Link 
                         to="/settings"
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors w-full"
                         onClick={() => setShowUserMenu(false)}
                       >
                         <User className="w-4 h-4" />
@@ -167,10 +167,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                   </div>
 
                   {/* Logout */}
-                  <div className="border-t border-gray-200 pt-1">
+                  <div className="border-t border-gray-200 dark:border-slate-700 pt-1">
                     <button 
                       onClick={logout}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out

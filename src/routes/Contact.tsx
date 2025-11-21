@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { Mail, MessageSquare, Phone, MapPin, Clock } from 'lucide-react';
+import { Mail, MessageSquare, Clock } from 'lucide-react';
 
 export function Contact() {
   return (
@@ -162,32 +162,17 @@ export function Contact() {
               </Card>
 
               <Card className="p-6">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
-                    <p className="text-sm text-gray-600 mb-2">Enterprise customers only</p>
-                    <a href="tel:+1-555-0123" className="text-sm text-indigo-600 hover:text-indigo-700">
-                      +1 (555) 012-3456
-                    </a>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-indigo-600" />
+                    <Mail className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Office</h3>
-                    <p className="text-sm text-gray-600">
-                      123 Cloud Street<br />
-                      San Francisco, CA 94105<br />
-                      United States
-                    </p>
+                    <h3 className="font-semibold text-gray-900 mb-1">Legal & Privacy</h3>
+                    <p className="text-sm text-gray-600 mb-2">Data Protection Officer</p>
+                    <p className="text-sm font-medium text-gray-900 mb-1">Gabriel Seto Pribadi</p>
+                    <a href="mailto:me@gabrielseto.dev" className="text-sm text-indigo-600 hover:text-indigo-700">
+                      me@gabrielseto.dev
+                    </a>
                   </div>
                 </div>
               </Card>

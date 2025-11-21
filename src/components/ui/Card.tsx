@@ -8,9 +8,9 @@ export interface CardProps {
 }
 
 export function Card({ children, className = '', onClick, interactive = false }: CardProps) {
-  const baseStyles = 'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-sm'
+  const baseStyles = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm'
   const interactiveStyles = interactive
-    ? 'cursor-pointer transition-all hover:border-[var(--color-text-secondary)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2'
+    ? 'cursor-pointer transition-all hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2'
     : ''
 
   const Component = onClick ? 'button' : 'div'
@@ -32,7 +32,7 @@ export interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
-  return <div className={`px-6 py-4 border-b border-[var(--color-border)] ${className}`}>{children}</div>
+  return <div className={`px-6 py-4 border-b border-gray-200 dark:border-slate-700 ${className}`}>{children}</div>
 }
 
 export interface CardBodyProps {
@@ -50,5 +50,5 @@ export interface CardFooterProps {
 }
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
-  return <div className={`px-6 py-4 border-t border-[var(--color-border)] ${className}`}>{children}</div>
+  return <div className={`px-6 py-4 border-t border-gray-200 dark:border-slate-700 ${className}`}>{children}</div>
 }

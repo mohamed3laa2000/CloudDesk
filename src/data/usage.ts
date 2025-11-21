@@ -15,11 +15,35 @@ const DEMO_USAGE_HOURS: Record<string, number> = {
 };
 
 /**
+ * Calculate billable hours for an instance
+ * Matches backend logic: from created_at to now (or updated_at for deleted instances)
+ */
+function calculateUsageHours(instance: Instance): number {
+  // If we have hardcoded demo data, use it for demo instances
+  if (DEMO_USAGE_HOURS[instance.id] !== undefined) {
+    return DEMO_USAGE_HOURS[instance.id];
+  }
+  
+  // Calculate billable hours based on time elapsed since creation
+  // This matches the backend calculateBillableHours logic
+  const created = new Date(instance.createdAt);
+  const endTime = instance.status === 'DELETED' 
+    ? new Date(instance.updatedAt || Date.now())  // Use deletion time for deleted instances
+    : new Date();  // Use current time for active instances
+  
+  const diffMs = endTime.getTime() - created.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  // Round to 2 decimal places, ensure non-negative
+  return Math.max(0, Math.round(diffHours * 100) / 100);
+}
+
+/**
  * Build usage data for all instances
  */
 export function buildUsage(instances: Instance[], _pricing?: PricingConfig): UsageRow[] {
   return instances.map((instance) => {
-    const hours = DEMO_USAGE_HOURS[instance.id] || 0;
+    const hours = calculateUsageHours(instance);
     
     // Calculate compute hourly rate (CPU + RAM + GPU)
     const cpuCost = instance.cpuCores * PRICING_CONFIG.basePerCpuPerHour;

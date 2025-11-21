@@ -38,7 +38,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       description: 'Use light mode',
       icon: (
         <svg
-          className="w-5 h-5 text-gray-700"
+          className="w-5 h-5 text-gray-700 dark:text-gray-100"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -59,7 +59,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       description: 'Use dark mode',
       icon: (
         <svg
-          className="w-5 h-5 text-gray-700"
+          className="w-5 h-5 text-gray-700 dark:text-gray-100"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -80,7 +80,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
       description: 'Sync with system settings',
       icon: (
         <svg
-          className="w-5 h-5 text-gray-700"
+          className="w-5 h-5 text-gray-700 dark:text-gray-100"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -116,9 +116,9 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
           <label
             key={option.value}
             className={`
-              flex items-center p-3 sm:p-4 border-2 rounded-lg transition-all
-              ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-teal-500'}
-              ${isSelected ? 'border-teal-600 bg-teal-50' : 'border-gray-200 bg-white'}
+              flex items-center p-3 sm:p-4 border rounded-lg transition-all
+              ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-teal-500 dark:hover:border-teal-400 hover:bg-gray-50 dark:hover:bg-slate-700'}
+              ${isSelected ? 'border-teal-600 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/40' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-slate-700/50'}
             `}
             style={{
               borderColor: isSelected ? 'var(--color-accent)' : '#e5e7eb',
@@ -139,11 +139,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
             <div className="ml-2 sm:ml-3 flex-1 min-w-0">
               <div className="flex items-center">
                 <span className="mr-1.5 sm:mr-2 flex-shrink-0">{option.icon}</span>
-                <span className="text-sm sm:text-base font-medium text-gray-900">
+                <span className="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-50">
                   {option.label}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-100 mt-0.5 sm:mt-1">
                 {option.description}
               </p>
             </div>
