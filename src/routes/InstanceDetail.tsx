@@ -13,7 +13,6 @@ import {
   Play, 
   Pause, 
   Trash2, 
-  Save,
   Cpu,
   MemoryStick,
   HardDrive,
@@ -33,6 +32,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { WindowsPasswordResetModal } from '../components/Windows/WindowsPasswordResetModal';
 import { ProvisioningProgress } from '../components/ui/ProvisioningProgress';
 import { apiService } from '../services/api';
+import { BackupButton } from '../components/Backup/BackupButton';
 
 export default function InstanceDetail() {
   const { id } = useParams();
@@ -102,11 +102,6 @@ export default function InstanceDetail() {
     } finally {
       setIsActionLoading(false);
     }
-  };
-
-  // Handle backup
-  const handleBackup = () => {
-    showToast('Backup created (demo)');
   };
 
   // Handle Windows password reset
@@ -284,10 +279,16 @@ export default function InstanceDetail() {
                 </Button>
               )}
 
-              <Button variant="secondary" onClick={handleBackup} className="w-full sm:w-auto">
-                <Save className="w-4 h-4 mr-2" />
-                Backup
-              </Button>
+              <BackupButton
+                instanceId={instance.id}
+                instanceName={instance.name}
+                instanceZone={instance.gcpZone || instance.region}
+                instanceStatus={instance.status}
+                storageGb={instance.storageGb}
+                onBackupCreated={(backup) => {
+                  showToast(`Backup "${backup.name}" is being created. This may take several minutes.`);
+                }}
+              />
 
               <Button 
                 variant="destructive" 

@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const instanceRoutes = require('./routes/instances');
 const billingRoutes = require('./routes/billing');
 const userRoutes = require('./routes/users');
+const backupRoutes = require('./routes/backups');
 const errorHandler = require('./middleware/errorHandler');
 const { initializeAdmin } = require('./services/firebaseAdmin');
 const dbService = require('./services/dbService');
@@ -89,6 +90,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/instances', instanceRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/backups', backupRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

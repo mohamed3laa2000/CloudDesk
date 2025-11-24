@@ -19,6 +19,15 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    name: 'Backups',
+    path: '/backups',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+    ),
+  },
+  {
     name: 'Create Instance',
     path: '/create',
     icon: (
@@ -93,7 +102,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         <nav className="flex-1 p-3 space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || 
-                           (item.path === '/dashboard' && location.pathname.startsWith('/instances/'));
+                           (item.path === '/dashboard' && location.pathname.startsWith('/instances/')) ||
+                           (item.path === '/backups' && location.pathname.startsWith('/backups'));
             
             return (
               <Link
