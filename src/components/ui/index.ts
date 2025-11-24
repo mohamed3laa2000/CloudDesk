@@ -22,3 +22,6 @@ export type { ErrorAlertProps } from './ErrorAlert'
 
 export { Tabs, UnderlineTabs } from './Tabs'
 export type { TabsProps, TabItem, UnderlineTabsProps, UnderlineTabItem } from './Tabs'
+
+export { ProvisioningProgress } from './ProvisioningProgress'
+export type { ProvisioningProgressProps } from './ProvisioningProgress'

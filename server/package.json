@@ -9,6 +9,10 @@
     "migrate": "node migrations/runMigration.js",
     "migrate:passkey": "node migrations/runPasskeyMigrations.js",
     "migrate:test": "node migrations/testPasskeyMigrations.js",
+    "migrate:currency:prepare": "node migrations/runPrecisionMigration.js",
+    "migrate:currency": "node migrations/runCurrencyMigration.js",
+    "migrate:currency:test": "node migrations/testCurrencyMigration.js",
+    "migrate:currency:verify": "node migrations/verifyCurrencyMigration.js",
     "seed": "node migrations/runSeed.js",
     "test": "jest --runInBand"
   },

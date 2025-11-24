@@ -490,19 +490,20 @@ const calculateUsageSummary = async (email) => {
     }
 
     // Pricing configuration (matching frontend pricing.ts)
+    // All prices in IDR (Indonesian Rupiah) - Conversion rate: 1 USD = 16,600 IDR
     const PRICING_CONFIG = {
-      basePerCpuPerHour: 0.04,
-      basePerRamGbPerHour: 0.01,
-      basePerStorageGbPerHour: 0.001,
+      basePerCpuPerHour: 788.5, // Rp 788.5 per vCPU per hour (0.0475 USD * 16600)
+      basePerRamGbPerHour: 107.9, // Rp 107.9 per GB RAM per hour (0.0065 USD * 16600)
+      basePerStorageGbPerHour: 2.324, // Rp 2.324 per GB storage per hour (~Rp 1,660/GB/month)
       gpuExtraPerHour: {
         NONE: 0.0,
-        T4: 0.50,
-        V100: 2.50,
-        A10: 1.80,
-        A100: 4.00,
-        H100: 8.00,
-        RTX_4090: 2.80,
-        RTX_A6000: 3.20,
+        T4: 5810,           // Entry-level ML/inference (0.35 USD * 16600)
+        V100: 41168,        // Professional deep learning (2.48 USD * 16600)
+        A10: 29880,         // Professional graphics/AI (1.80 USD * 16600)
+        A100: 60922,        // Enterprise AI training (3.67 USD * 16600)
+        H100: 132800,       // Next-gen enterprise AI (8.00 USD * 16600)
+        RTX_4090: 46480,    // Workstation rendering (2.80 USD * 16600)
+        RTX_A6000: 53120,   // Professional visualization (3.20 USD * 16600)
       },
       markupRate: 1.0,
     };

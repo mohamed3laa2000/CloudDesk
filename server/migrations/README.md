@@ -99,6 +99,22 @@ Adds the `passkey_2fa_enabled` column to the `approved_users` table:
 
 Also adds a comment describing the column's purpose.
 
+### 008_convert_usd_to_idr.sql
+Converts all existing billing records from USD to IDR currency:
+
+**Changes:**
+- Multiplies all cost fields in `billing_records` by 16,600 (conversion rate: 1 USD = 16,600 IDR)
+- Updates table and column comments to indicate IDR currency
+- Creates `migration_log` table to track currency migration
+- Only converts records with `total_cost < 1000` (assumed to be in USD)
+
+**Affected columns:**
+- `compute_cost` - Converted to IDR
+- `storage_cost` - Converted to IDR
+- `total_cost` - Converted to IDR
+
+See [CURRENCY_MIGRATION_GUIDE.md](./CURRENCY_MIGRATION_GUIDE.md) for detailed migration instructions.
+
 ## Running Migrations
 
 ### Run All Migrations
@@ -152,6 +168,41 @@ This test script will:
 - Verify foreign key constraints are in place
 - Check that the 2FA column exists in approved_users table
 - Clean up all test data automatically
+
+### Run Currency Migration
+
+To convert existing billing records from USD to IDR:
+
+```bash
+node migrations/runCurrencyMigration.js
+```
+
+This interactive script will:
+- Show current billing statistics
+- Preview records to be converted
+- Ask for confirmation
+- Create automatic backup
+- Convert all USD values to IDR (1 USD = 16,600 IDR)
+- Verify migration results
+- Provide rollback instructions
+
+**Important:** This migration is idempotent and safe to run multiple times. It will skip records already in IDR.
+
+See [CURRENCY_MIGRATION_GUIDE.md](./CURRENCY_MIGRATION_GUIDE.md) for detailed instructions, troubleshooting, and rollback procedures.
+
+### Verify Currency Migration
+
+To verify that the currency migration was successful:
+
+```bash
+node migrations/verifyCurrencyMigration.js
+```
+
+This will check:
+- Migration log entry exists
+- All billing records are in IDR range
+- Table metadata updated correctly
+- No suspicious values remain
 
 ## Running Seeds
 

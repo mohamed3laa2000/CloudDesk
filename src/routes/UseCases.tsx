@@ -33,7 +33,7 @@ const presetDetails = {
       'Port forwarding for web development',
       'Automatic daily backups'
     ],
-    pricing: '$0.15/hour when running'
+    pricing: 'Rp 2.490/hour when running'
   },
   engineering: {
     title: 'Engineering Preset',
@@ -60,7 +60,7 @@ const presetDetails = {
       'Collaborative design tools',
       'Project file versioning'
     ],
-    pricing: '$1.20/hour when running'
+    pricing: 'Rp 19.920/hour when running'
   },
   'data-science': {
     title: 'Data Science Preset',
@@ -87,7 +87,7 @@ const presetDetails = {
       'Notebook collaboration',
       'Experiment tracking tools'
     ],
-    pricing: '$2.50/hour when running'
+    pricing: 'Rp 41.500/hour when running'
   }
 };
 
@@ -667,7 +667,7 @@ export function UseCases() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Only pay for compute time. Storage charged separately at $0.10/GB/month.
+                  Only pay for compute time. Storage charged separately at Rp 1.660/GB/month.
                 </p>
                 <div className="flex gap-3">
                   <Link to={`/create?preset=${selectedPreset}`} className="flex-1">

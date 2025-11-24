@@ -27,14 +27,14 @@ const REGIONS: { value: Region; label: string }[] = [
 ];
 
 const GPU_OPTIONS: { value: GpuType; label: string; description: string; priceImpact: string }[] = [
-  { value: 'NONE', label: 'None', description: 'No GPU (most workloads)', priceImpact: '$0.00/hr' },
-  { value: 'T4', label: 'NVIDIA T4', description: 'Entry - ML inference, light training', priceImpact: '+$0.50/hr' },
-  { value: 'A10', label: 'NVIDIA A10', description: 'Professional - Graphics, AI inference', priceImpact: '+$1.80/hr' },
-  { value: 'V100', label: 'NVIDIA V100', description: 'Professional - Deep learning, HPC', priceImpact: '+$2.50/hr' },
-  { value: 'RTX_4090', label: 'NVIDIA RTX 4090', description: 'Workstation - 3D rendering, game dev', priceImpact: '+$2.80/hr' },
-  { value: 'RTX_A6000', label: 'NVIDIA RTX A6000', description: 'Workstation - Professional CAD', priceImpact: '+$3.20/hr' },
-  { value: 'A100', label: 'NVIDIA A100', description: 'Enterprise - Large-scale AI training', priceImpact: '+$4.00/hr' },
-  { value: 'H100', label: 'NVIDIA H100', description: 'Enterprise - Generative AI, LLMs', priceImpact: '+$8.00/hr' },
+  { value: 'NONE', label: 'None', description: 'No GPU (most workloads)', priceImpact: 'Rp 0/hr' },
+  { value: 'T4', label: 'NVIDIA T4', description: 'Entry - ML inference, light training', priceImpact: '+Rp 5.810/hr' },
+  { value: 'A10', label: 'NVIDIA A10', description: 'Professional - Graphics, AI inference', priceImpact: '+Rp 29.880/hr' },
+  { value: 'V100', label: 'NVIDIA V100', description: 'Professional - Deep learning, HPC', priceImpact: '+Rp 41.168/hr' },
+  { value: 'RTX_4090', label: 'NVIDIA RTX 4090', description: 'Workstation - 3D rendering, game dev', priceImpact: '+Rp 46.480/hr' },
+  { value: 'RTX_A6000', label: 'NVIDIA RTX A6000', description: 'Workstation - Professional CAD', priceImpact: '+Rp 53.120/hr' },
+  { value: 'A100', label: 'NVIDIA A100', description: 'Enterprise - Large-scale AI training', priceImpact: '+Rp 60.922/hr' },
+  { value: 'H100', label: 'NVIDIA H100', description: 'Enterprise - Generative AI, LLMs', priceImpact: '+Rp 132.800/hr' },
 ];
 
 export default function CreateInstance() {
@@ -533,14 +533,14 @@ export default function CreateInstance() {
                   <div>
                     <p className="text-xs text-gray-700 dark:text-gray-100 mb-1">Hourly</p>
                     <p className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50">
-                      ${hourlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/hr</span>
+                      Rp {hourlyCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/hr</span>
                     </p>
                   </div>
                   <div className="pt-3 border-t border-indigo-200 dark:border-indigo-600">
                     <p className="text-xs text-gray-700 dark:text-gray-100 mb-1">Monthly estimate</p>
                     <p className="text-xs text-gray-600 dark:text-gray-100 mb-2">(8 hrs/day, 22 days)</p>
                     <p className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-50">
-                      ${monthlyCost.toFixed(2)}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/mo</span>
+                      Rp {monthlyCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}<span className="text-sm font-normal text-gray-700 dark:text-gray-100">/mo</span>
                     </p>
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export default function CreateInstance() {
                   <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1.5">Billing Information</h4>
                   <div className="space-y-1.5 text-xs text-blue-900 dark:text-blue-100">
                     <p>
-                      <span className="font-medium">Storage:</span> Billed at ${(storageGb * 0.10).toFixed(2)}/month ($0.10/GB/month) regardless of instance state.
+                      <span className="font-medium">Storage:</span> Billed at Rp {(storageGb * 1660).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/month (Rp 1.660/GB/month) regardless of instance state.
                     </p>
                     <p>
                       <span className="font-medium">Compute:</span> Costs apply only when the instance is running.

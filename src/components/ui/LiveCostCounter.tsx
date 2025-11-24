@@ -38,14 +38,14 @@ export const LiveCostCounter: React.FC<LiveCostCounterProps> = ({
   if (!isRunning) {
     return (
       <span className={`text-gray-500 ${className}`}>
-        $0.00
+        Rp 0
       </span>
     );
   }
 
   return (
     <span className={`font-mono text-emerald-600 ${className}`}>
-      ${currentCost.toFixed(4)}
+      Rp {currentCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
     </span>
   );
 };

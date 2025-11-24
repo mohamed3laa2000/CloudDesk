@@ -14,6 +14,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { LiveIndicator } from '../components/ui/LiveIndicator';
 import { LastUpdated } from '../components/ui/LastUpdated';
+import { ProvisioningProgress } from '../components/ui/ProvisioningProgress';
 import { useInstancesDemo } from '../hooks/useInstancesDemo';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -60,7 +61,7 @@ export default function Dashboard() {
   const stoppedInstances = instances.filter((i) => i.status === 'STOPPED').length;
 
   // Simplified cost calculation (based on running instances)
-  const estimatedMonthlyCost = runningInstances * 42.5; // Rough estimate per instance
+  const estimatedMonthlyCost = runningInstances * 705500; // Rough estimate per instance (42.5 USD * 16600)
 
   // Dynamic document title
   const documentTitle = useMemo(() => {
@@ -170,7 +171,7 @@ export default function Dashboard() {
                 Est. Monthly Cost
               </p>
               <p className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100">
-                ${estimatedMonthlyCost.toFixed(2)}
+                Rp {estimatedMonthlyCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Based on current usage
@@ -341,6 +342,13 @@ export default function Dashboard() {
                       <span>•</span>
                       <span>{getRelativeTime(instance.createdAt)}</span>
                     </div>
+                    
+                    {/* Provisioning Progress Bar */}
+                    {instance.status === 'PROVISIONING' && (
+                      <div className="mt-3">
+                        <ProvisioningProgress createdAt={instance.createdAt} variant="compact" />
+                      </div>
+                    )}
                   </div>
 
 

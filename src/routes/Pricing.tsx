@@ -76,10 +76,10 @@ export function Pricing() {
             </div>
             <div className="mb-6">
               <div className="flex items-baseline">
-                <span className="text-4xl font-semibold text-gray-900">$0.25</span>
+                <span className="text-4xl font-semibold text-gray-900">Rp 4.150</span>
                 <span className="text-gray-600 ml-2">/hour</span>
               </div>
-              <p className="text-sm text-gray-500 mt-2">~$20/month for typical usage</p>
+              <p className="text-sm text-gray-500 mt-2">~Rp 332.000/month for typical usage</p>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start gap-3">
@@ -121,10 +121,10 @@ export function Pricing() {
             </div>
             <div className="mb-6">
               <div className="flex items-baseline">
-                <span className="text-4xl font-semibold text-gray-900">$0.50</span>
+                <span className="text-4xl font-semibold text-gray-900">Rp 8.300</span>
                 <span className="text-gray-600 ml-2">/hour</span>
               </div>
-              <p className="text-sm text-gray-500 mt-2">~$40/month for typical usage</p>
+              <p className="text-sm text-gray-500 mt-2">~Rp 664.000/month for typical usage</p>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start gap-3">
@@ -213,11 +213,11 @@ export function Pricing() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">NVIDIA T4 (Basic)</span>
-                    <span className="font-medium text-gray-900">+$0.50/hour</span>
+                    <span className="font-medium text-gray-900">+Rp 5.810/hour</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">NVIDIA A100 (Advanced)</span>
-                    <span className="font-medium text-gray-900">+$2.00/hour</span>
+                    <span className="font-medium text-gray-900">+Rp 60.922/hour</span>
                   </div>
                 </div>
               </div>
@@ -226,11 +226,11 @@ export function Pricing() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Additional Storage</span>
-                    <span className="font-medium text-gray-900">$0.10/GB/month</span>
+                    <span className="font-medium text-gray-900">Rp 1.660/GB/month</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Backup Storage</span>
-                    <span className="font-medium text-gray-900">$0.05/GB/month</span>
+                    <span className="font-medium text-gray-900">Rp 830/GB/month</span>
                   </div>
                 </div>
               </div>

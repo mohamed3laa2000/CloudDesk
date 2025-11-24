@@ -470,19 +470,19 @@ export function Documentation() {
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Compute (when running)</span>
-                        <span className="text-gray-900 font-medium">$0.10 - $2.50/hour</span>
+                        <span className="text-gray-900 font-medium">Rp 1.660 - Rp 41.500/hour</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Storage (always charged)</span>
-                        <span className="text-gray-900 font-medium">$0.10/GB/month</span>
+                        <span className="text-gray-900 font-medium">Rp 1.660/GB/month</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">GPU (when running)</span>
-                        <span className="text-gray-900 font-medium">$0.50 - $3.00/hour</span>
+                        <span className="text-gray-900 font-medium">Rp 5.810 - Rp 132.800/hour</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Snapshots</span>
-                        <span className="text-gray-900 font-medium">$0.05/GB/month</span>
+                        <span className="text-gray-900 font-medium">Rp 830/GB/month</span>
                       </div>
                     </div>
                   </div>

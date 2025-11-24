@@ -31,6 +31,7 @@ import {
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { WindowsPasswordResetModal } from '../components/Windows/WindowsPasswordResetModal';
+import { ProvisioningProgress } from '../components/ui/ProvisioningProgress';
 import { apiService } from '../services/api';
 
 export default function InstanceDetail() {
@@ -40,6 +41,7 @@ export default function InstanceDetail() {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [showNonWindowsInstructions, setShowNonWindowsInstructions] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
@@ -230,6 +232,13 @@ export default function InstanceDetail() {
                   <span>Created {createdText}</span>
                 </div>
               </div>
+              
+              {/* Provisioning Progress Bar */}
+              {instance.status === 'PROVISIONING' && (
+                <div className="mt-4">
+                  <ProvisioningProgress createdAt={instance.createdAt} variant="full" />
+                </div>
+              )}
             </div>
 
             {/* Right: Actions */}
@@ -508,9 +517,9 @@ export default function InstanceDetail() {
               {/* Estimated Cost */}
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">Estimated Cost (This Month)</p>
-                <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">${estimatedCost.toFixed(2)}</p>
+                <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">Rp {estimatedCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Based on ${(estimatedCost / hoursUsed || 0).toFixed(2)}/hour
+                  Based on Rp {(estimatedCost / hoursUsed || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/hour
                 </p>
               </div>
 
@@ -534,30 +543,31 @@ export default function InstanceDetail() {
           <Card className="max-w-lg w-full mx-4 p-6 sm:p-8 relative">
             <button
               onClick={() => setShowConnectModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-4">
               Connect to {instance.name}
             </h3>
             
             {/* Show IP address and Download RDP button for GCP instances with external IP */}
             {instance.gcpInstanceId && instance.gcpExternalIp ? (
               <>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                   <div className="flex items-start gap-3">
-                    <Network className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <Network className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-900 mb-1">Instance IP Address</p>
-                      <p className="text-base font-mono text-blue-900">{instance.gcpExternalIp}</p>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Instance IP Address</p>
+                      <p className="text-base font-mono text-blue-900 dark:text-blue-50">{instance.gcpExternalIp}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <Button 
+                    variant="primary"
                     className="w-full" 
                     onClick={() => {
                       downloadRDPFile(instance.name, instance.gcpExternalIp!);
@@ -569,22 +579,50 @@ export default function InstanceDetail() {
                   </Button>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-900 mb-2">Connection Instructions</p>
-                  <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-50 mb-2">Connection Instructions (Windows client)</p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-300 space-y-2 list-decimal list-inside">
                     <li>Download the RDP file above</li>
                     <li>Open the file with Remote Desktop Connection</li>
                     <li>Use your Windows credentials to log in</li>
                   </ol>
-                  <p className="text-xs text-gray-500 mt-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                     If you need to reset your Windows password, close this dialog and click "Reset Windows Password".
                   </p>
+                  
+                  {/* Non-Windows Instructions */}
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Not using Windows client?{' '}
+                      <button
+                        onClick={() => setShowNonWindowsInstructions(!showNonWindowsInstructions)}
+                        className="text-teal-600 dark:text-teal-400 hover:underline focus:outline-none"
+                      >
+                        click here
+                      </button>
+                    </p>
+                    
+                    {showNonWindowsInstructions && (
+                      <div className="mt-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                        <div className="text-xs text-gray-700 dark:text-gray-300 space-y-3">
+                          <div>
+                            <p className="font-semibold mb-1">On your macOS or iOS device:</p>
+                            <p>Open Windows App (available for free from Microsoft Store and the Apple App Store), and add the name of the PC that you want to connect to (the Instance IP Address). Select the remote PC name that you added, and then wait for the connection to complete.</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold mb-1">On your Android device:</p>
+                            <p>Open the Remote Desktop app (available for free from the Google Play Store) and add the name of the PC that you want to connect to (the Instance IP Address). Select the remote PC name that you added, and then wait for the connection to complete.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
               <>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-blue-900">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
                     <strong>Demo Mode:</strong> This is a demonstration. In a real product, this would open a remote desktop session using RDP, VNC, or a browser-based client.
                   </p>
                 </div>
@@ -599,16 +637,16 @@ export default function InstanceDetail() {
                   </Button>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-900 mb-2">Demo Credentials</p>
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+                  <p className="text-xs font-semibold text-gray-900 dark:text-gray-50 mb-2">Demo Credentials</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Username:</span>
-                      <span className="text-gray-900 font-mono">clouddesk</span>
+                      <span className="text-gray-500 dark:text-gray-400">Username:</span>
+                      <span className="text-gray-900 dark:text-gray-50 font-mono">clouddesk</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Password:</span>
-                      <span className="text-gray-900 font-mono">••••••••</span>
+                      <span className="text-gray-500 dark:text-gray-400">Password:</span>
+                      <span className="text-gray-900 dark:text-gray-50 font-mono">••••••••</span>
                     </div>
                   </div>
                 </div>

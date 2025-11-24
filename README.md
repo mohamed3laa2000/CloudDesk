@@ -92,6 +92,12 @@ cp server/.env.example server/.env
 cd server
 npm run migrate
 npm run seed
+
+# If migrating from USD to IDR (optional - only if you have existing billing data)
+npm run migrate:currency:test    # Test first
+npm run migrate:currency         # Run migration
+npm run migrate:currency:verify  # Verify results
+
 cd ..
 
 # Start backend server (in one terminal)
@@ -502,6 +508,34 @@ The application automatically detects WebAuthn support and gracefully hides pass
 - Review server logs for detailed error messages
 
 For more details, see the [WebAuthn section in server/README.md](server/README.md#webauthn--passkey-authentication).
+
+### Currency Migration (USD to IDR)
+
+CloudDesk EDU uses Indonesian Rupiah (IDR) for all pricing. If you have existing billing data in USD, use the migration scripts:
+
+```bash
+cd server
+
+# Step 1: Test migration (safe, no real data changed)
+npm run migrate:currency:test
+
+# Step 2: Run migration (converts USD to IDR at 1 USD = 16,600 IDR)
+npm run migrate:currency
+
+# Step 3: Verify results
+npm run migrate:currency:verify
+```
+
+**Features:**
+- ✅ Automatic backup creation before migration
+- ✅ Interactive confirmation prompts
+- ✅ Comprehensive verification
+- ✅ Idempotent (safe to run multiple times)
+- ✅ Rollback instructions provided
+
+**Note:** If you're starting fresh with no existing billing data, you don't need to run the migration. The application is already configured for IDR.
+
+For detailed instructions, see [MIGRATION-GUIDE.md](MIGRATION-GUIDE.md).
 
 ### GCP Compute Engine Integration (Optional)
 

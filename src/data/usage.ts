@@ -106,21 +106,21 @@ export function generateDailyUsage(_instances?: Instance[]): DailyUsage[] {
   const dailyData: DailyUsage[] = [];
   const today = new Date('2025-01-20'); // Fixed date for demo consistency
 
-  // Base daily costs with realistic variation
+  // Base daily costs with realistic variation (in IDR)
   const baseDailyCosts = [
-    1.85, 2.12, 2.45, 1.92, 2.18, 1.65, 1.42, // Week 1 (weekend lower)
-    2.35, 2.58, 2.72, 2.45, 2.38, 1.88, 1.55, // Week 2
-    2.42, 2.65, 2.88, 2.52, 2.45, 1.95, 1.68, // Week 3
-    2.55, 2.78, 3.12, 2.85, 2.62, 2.15, 1.82, // Week 4
-    2.68, 2.92, // Last 2 days
+    30710, 35192, 40670, 31872, 36188, 27390, 23572, // Week 1 (weekend lower)
+    39010, 42828, 45152, 40670, 39508, 31208, 25730, // Week 2
+    40172, 43990, 47808, 41832, 40670, 32370, 27888, // Week 3
+    42330, 46148, 51792, 47310, 43492, 35690, 30212, // Week 4
+    44492, 48472, // Last 2 days
   ];
 
   for (let i = 29; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
 
-    const cost = baseDailyCosts[29 - i] || 2.0;
-    const hours = Math.round((cost / 0.42) * 10) / 10; // Approximate hours based on avg rate
+    const cost = baseDailyCosts[29 - i] || 33200;
+    const hours = Math.round((cost / 6972) * 10) / 10; // Approximate hours based on avg rate (0.42 USD * 16600 = 6972 IDR)
 
     dailyData.push({
       date: date.toISOString().split('T')[0],
