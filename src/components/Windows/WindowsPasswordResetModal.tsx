@@ -135,7 +135,7 @@ export function WindowsPasswordResetModal({
 
       {/* Modal */}
       <div
-        className="relative bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="relative bg-white dark:bg-slate-800 border border-[var(--color-border)] rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"

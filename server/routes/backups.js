@@ -18,4 +18,7 @@ router.get('/:id', backupController.getBackup);
 // DELETE /api/backups/:id - Delete backup
 router.delete('/:id', backupController.deleteBackup);
 
+// POST /api/backups/:id/restore - Restore backup to create new instance
+router.post('/:id/restore', backupController.restoreBackup);
+
 module.exports = router;

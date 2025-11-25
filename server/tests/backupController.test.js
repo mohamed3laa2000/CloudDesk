@@ -827,4 +827,274 @@ describe('backupController', () => {
       expect(next).not.toHaveBeenCalled();
     });
   });
+
+  describe('restoreBackup', () => {
+    it('should restore backup and create new instance with 201 status', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      const mockBackup = {
+        id: 'bak-123',
+        userEmail: 'test@example.com',
+        instanceId: 'inst-1',
+        name: 'Test Backup',
+        gcpMachineImageName: 'backup-inst-1-123456',
+        status: 'COMPLETED'
+      };
+
+      const mockOriginalInstance = {
+        id: 'inst-1',
+        imageId: 'windows-server-2022',
+        cpuCores: 4,
+        ramGb: 16,
+        storageGb: 100,
+        gpu: false,
+        gcpMachineType: 'n1-standard-4'
+      };
+
+      const mockGcpMetadata = {
+        projectId: 'test-project'
+      };
+
+      const mockCreatedInstance = {
+        id: 'inst-new',
+        userEmail: 'test@example.com',
+        name: 'restored-instance',
+        status: 'PROVISIONING'
+      };
+
+      dbService.getBackupById.mockResolvedValue(mockBackup);
+      dbService.getInstanceById.mockResolvedValue(mockOriginalInstance);
+      gcpService.createInstanceFromMachineImage.mockResolvedValue(mockGcpMetadata);
+      dbService.createInstance.mockResolvedValue(mockCreatedInstance);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(dbService.getBackupById).toHaveBeenCalledWith('bak-123');
+      expect(gcpService.createInstanceFromMachineImage).toHaveBeenCalledWith(
+        'restored-instance',
+        'us-central1-a',
+        'backup-inst-1-123456'
+      );
+      expect(dbService.createInstance).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Instance restore initiated successfully',
+        instance: mockCreatedInstance
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 if instanceName is missing', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        zone: 'us-central1-a'
+      };
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Bad Request',
+        message: 'Missing required field: instanceName'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 if instanceName is empty', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: '   ',
+        zone: 'us-central1-a'
+      };
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Bad Request',
+        message: 'Instance name cannot be empty'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 if instanceName contains invalid characters', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'invalid@name!',
+        zone: 'us-central1-a'
+      };
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Bad Request',
+        message: 'Instance name contains invalid characters'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 if backup not found', async () => {
+      // Arrange
+      req.params = { id: 'bak-nonexistent' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      dbService.getBackupById.mockResolvedValue(null);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(dbService.getBackupById).toHaveBeenCalledWith('bak-nonexistent');
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Not Found',
+        message: 'Backup not found'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 if user does not own the backup', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      const mockBackup = {
+        id: 'bak-123',
+        userEmail: 'other@example.com',
+        status: 'COMPLETED'
+      };
+
+      dbService.getBackupById.mockResolvedValue(mockBackup);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Forbidden',
+        message: 'You do not have permission to restore this backup'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 if backup status is not COMPLETED', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      const mockBackup = {
+        id: 'bak-123',
+        userEmail: 'test@example.com',
+        status: 'CREATING'
+      };
+
+      dbService.getBackupById.mockResolvedValue(mockBackup);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Bad Request',
+        message: 'Cannot restore backup with status CREATING. Only COMPLETED backups can be restored.'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 500 on GCP error', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      const mockBackup = {
+        id: 'bak-123',
+        userEmail: 'test@example.com',
+        instanceId: 'inst-1',
+        gcpMachineImageName: 'backup-inst-1-123456',
+        status: 'COMPLETED'
+      };
+
+      const gcpError = {
+        error: 'GCP_ERROR',
+        message: 'Failed to create instance'
+      };
+
+      dbService.getBackupById.mockResolvedValue(mockBackup);
+      gcpService.createInstanceFromMachineImage.mockRejectedValue(gcpError);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'GCP_ERROR',
+        message: 'Failed to create instance'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should return 503 on database error', async () => {
+      // Arrange
+      req.params = { id: 'bak-123' };
+      req.body = {
+        instanceName: 'restored-instance',
+        zone: 'us-central1-a'
+      };
+
+      const dbError = new Error('Database connection failed');
+      dbService.getBackupById.mockRejectedValue(dbError);
+
+      // Act
+      await backupController.restoreBackup(req, res, next);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Service Unavailable',
+        message: 'Database service temporarily unavailable'
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
 });

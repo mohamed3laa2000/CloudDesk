@@ -249,6 +249,11 @@ export interface CreateBackupRequest {
   name: string;
 }
 
+export interface RestoreBackupRequest {
+  instanceName: string;
+  zone: string;
+}
+
 export interface BackupCostSummary {
   totalBackupStorageCost: number;
   totalBackupStorageGb: number;

@@ -15,6 +15,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { LiveCostCounter } from '../components/ui/LiveCostCounter';
+import { RestoreButton } from '../components/Backup/RestoreButton';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useBackupsDemo } from '../hooks/useBackupsDemo';
 import type { BackupStatus } from '../data/types';
@@ -180,6 +181,16 @@ export default function BackupDetail() {
 
             {/* Right: Actions */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+              {backup.status === 'COMPLETED' && (
+                <RestoreButton
+                  backupId={backup.id}
+                  machineImageName={backup.gcpMachineImageName}
+                  defaultZone={backup.sourceInstanceZone}
+                  onRestoreInitiated={(instanceId) => {
+                    console.log('Restore initiated for instance:', instanceId);
+                  }}
+                />
+              )}
               {backup.status !== 'DELETED' && backup.status !== 'CREATING' && (
                 <Button 
                   variant="destructive" 

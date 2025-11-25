@@ -883,6 +883,67 @@ const getInstanceStatus = async (instanceName, zone) => {
 };
 
 /**
+ * Get full instance details from GCP
+ * @param {string} instanceName - GCP instance name
+ * @param {string} zone - GCP zone
+ * @returns {Promise<Object>} Full instance details including status, IP, etc.
+ * @throws {Error} If instance describe fails
+ */
+const describeInstance = async (instanceName, zone) => {
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'describeInstance',
+    'Getting instance details',
+    {
+      instanceName,
+      zone
+    }
+  );
+
+  try {
+    const args = [
+      'compute',
+      'instances',
+      'describe',
+      instanceName,
+      `--zone=${zone}`
+    ];
+
+    const result = await _executeGcloudCommand(args, { timeout: 30000 }); // 30 second timeout
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'describeInstance',
+      'Instance details retrieved',
+      {
+        instanceName,
+        zone,
+        status: result.status
+      }
+    );
+    
+    return result;
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to get instance details',
+      {
+        operation: 'describeInstance',
+        instanceName,
+        zone,
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
  * Wait for instance to reach expected status with retry logic
  * @param {string} instanceName - GCP instance name
  * @param {string} zone - GCP zone
@@ -1356,6 +1417,104 @@ const listMachineImages = async () => {
 };
 
 /**
+ * Create an instance from a machine image
+ * @param {string} instanceName - Name for the new instance
+ * @param {string} zone - GCP zone for the instance
+ * @param {string} machineImageName - Source machine image name
+ * @returns {Promise<Object>} Instance creation metadata
+ * @throws {Error} If instance creation fails
+ */
+const createInstanceFromMachineImage = async (instanceName, zone, machineImageName) => {
+  const startTime = Date.now();
+  
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'createInstanceFromMachineImage',
+    'Creating instance from machine image',
+    {
+      instanceName,
+      zone,
+      machineImageName
+    }
+  );
+
+  try {
+    const args = [
+      'compute',
+      'instances',
+      'create',
+      instanceName,
+      `--zone=${zone}`,
+      `--source-machine-image=${machineImageName}`
+    ];
+
+    const result = await _executeGcloudCommand(args, { timeout: GCP_TIMEOUT_MS });
+
+    // Parse instance metadata from result
+    // gcloud returns an array with a single instance object
+    const instanceData = Array.isArray(result) ? result[0] : result;
+
+    if (!instanceData) {
+      throw new Error('No instance data returned from gcloud command');
+    }
+
+    // Extract metadata
+    const metadata = {
+      gcpInstanceId: instanceData.name,
+      gcpZone: zone,
+      gcpMachineType: instanceData.machineType,
+      gcpProjectId: GCP_PROJECT_ID,
+      gcpExternalIp: null // Will be assigned after instance starts
+    };
+
+    // Try to extract external IP if available
+    if (instanceData.networkInterfaces && instanceData.networkInterfaces.length > 0) {
+      const networkInterface = instanceData.networkInterfaces[0];
+      if (networkInterface.accessConfigs && networkInterface.accessConfigs.length > 0) {
+        metadata.gcpExternalIp = networkInterface.accessConfigs[0].natIP || null;
+      }
+    }
+
+    // Log successful operation with context
+    const duration = Date.now() - startTime;
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'createInstanceFromMachineImage',
+      'Instance created from machine image successfully',
+      {
+        instanceName: metadata.gcpInstanceId,
+        zone: metadata.gcpZone,
+        machineImageName,
+        machineType: metadata.gcpMachineType,
+        externalIp: metadata.gcpExternalIp,
+        duration
+      }
+    );
+    
+    return metadata;
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to create instance from machine image',
+      {
+        operation: 'createInstanceFromMachineImage',
+        instanceName,
+        zone,
+        machineImageName,
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
  * Check if GCP is enabled and configured
  * @returns {boolean} True if GCP is enabled and configured
  */
@@ -1447,11 +1606,13 @@ module.exports = {
   stopInstance,
   deleteInstance,
   getInstanceStatus,
+  describeInstance,
   resetWindowsPassword,
   createMachineImage,
   describeMachineImage,
   deleteMachineImage,
   listMachineImages,
+  createInstanceFromMachineImage,
   isGcpEnabled,
   validateConfiguration,
   _executeGcloudCommand, // Exported for testing

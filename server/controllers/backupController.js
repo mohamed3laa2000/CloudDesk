@@ -510,9 +510,273 @@ const deleteBackup = async (req, res, next) => {
   }
 };
 
+/**
+ * Restore backup to create new instance
+ * @route POST /api/backups/:id/restore
+ * @body {instanceName, zone}
+ * @returns {Instance} Created instance with 201 status
+ */
+const restoreBackup = async (req, res, next) => {
+  try {
+    // Extract user email from JWT (attached by authMiddleware)
+    const { email } = req.user;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'User email not found in request'
+      });
+    }
+
+    // Extract backup ID from URL params
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Backup ID is required'
+      });
+    }
+
+    // Validate request body (instanceName, zone)
+    const { instanceName, zone } = req.body;
+
+    if (!instanceName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Missing required field: instanceName'
+      });
+    }
+
+    if (!zone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Missing required field: zone'
+      });
+    }
+
+    // Validate instance name (not empty, no invalid chars)
+    // Step 1: Check if name is empty or only whitespace after trimming
+    if (typeof instanceName !== 'string' || instanceName.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Instance name cannot be empty'
+      });
+    }
+
+    // Step 2: Validate no invalid characters (only alphanumeric, hyphens, underscores)
+    const invalidCharsRegex = /[^a-zA-Z0-9\-_]/;
+    if (invalidCharsRegex.test(instanceName)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Instance name contains invalid characters'
+      });
+    }
+
+    // Get backup from database
+    let backup;
+    try {
+      backup = await dbService.getBackupById(id);
+    } catch (error) {
+      console.error('Database error during getBackupById:', error);
+      return res.status(503).json({
+        success: false,
+        error: 'Service Unavailable',
+        message: 'Database service temporarily unavailable'
+      });
+    }
+
+    // Verify backup exists (404 if not)
+    if (!backup) {
+      return res.status(404).json({
+        success: false,
+        error: 'Not Found',
+        message: 'Backup not found'
+      });
+    }
+
+    // Verify backup ownership (403 if not)
+    if (backup.userEmail !== email) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden',
+        message: 'You do not have permission to restore this backup'
+      });
+    }
+
+    // Verify backup status is COMPLETED
+    if (backup.status !== 'COMPLETED') {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: `Cannot restore backup with status ${backup.status}. Only COMPLETED backups can be restored.`
+      });
+    }
+
+    // Call gcpService.createInstanceFromMachineImage
+    let gcpInstanceMetadata;
+    try {
+      console.log(`Creating instance ${instanceName} from machine image ${backup.gcpMachineImageName}`);
+      gcpInstanceMetadata = await gcpService.createInstanceFromMachineImage(
+        instanceName,
+        zone,
+        backup.gcpMachineImageName
+      );
+      console.log(`✓ Instance creation initiated in GCP`);
+    } catch (error) {
+      console.error('GCP instance creation error:', error);
+      // Handle GCP errors with 500
+      return res.status(500).json({
+        success: false,
+        error: error.error || 'GCP_ERROR',
+        message: error.message || 'Failed to create instance from backup'
+      });
+    }
+
+    // Create instance record in database with PROVISIONING status
+    let createdInstance;
+    try {
+      // Get the original instance to copy configuration
+      const originalInstance = await dbService.getInstanceById(backup.instanceId);
+      
+      // Prepare instance data
+      const instanceData = {
+        name: instanceName.trim(),
+        imageId: originalInstance?.imageId || 'windows-server-2022',
+        cpuCores: originalInstance?.cpuCores || 4,
+        ramGb: originalInstance?.ramGb || 16,
+        storageGb: originalInstance?.storageGb || 100,
+        gpu: originalInstance?.gpu || false,
+        region: zone
+      };
+
+      // Prepare GCP metadata
+      const gcpMetadata = {
+        gcpInstanceId: instanceName.trim(),
+        gcpZone: zone,
+        gcpMachineType: originalInstance?.gcpMachineType || 'n1-standard-4',
+        gcpProjectId: gcpInstanceMetadata?.projectId || process.env.GCP_PROJECT_ID,
+        gcpExternalIp: null // Will be populated when instance is running
+      };
+
+      createdInstance = await dbService.createInstance(email, instanceData, gcpMetadata);
+      console.log(`✓ Instance record created in database: ${createdInstance.id}`);
+    } catch (error) {
+      console.error('Database error during createInstance:', error);
+      return res.status(503).json({
+        success: false,
+        error: 'Service Unavailable',
+        message: 'Database service temporarily unavailable'
+      });
+    }
+
+    // Schedule background polling to update instance status and IP
+    // Don't await this - let it run in the background
+    pollRestoredInstanceStatus(createdInstance.id, instanceName, zone).catch(error => {
+      console.error(`Background polling failed for restored instance ${createdInstance.id}:`, error);
+    });
+
+    // Return instance with 201 status
+    return res.status(201).json({
+      success: true,
+      message: 'Instance restore initiated successfully',
+      instance: createdInstance
+    });
+
+  } catch (error) {
+    // Pass unexpected errors to error handling middleware
+    console.error('Unexpected error in restoreBackup controller:', error);
+    next(error);
+  }
+};
+
+/**
+ * Poll restored instance status until it's running and has an IP
+ * @param {string} instanceId - Database instance ID
+ * @param {string} gcpInstanceName - GCP instance name
+ * @param {string} zone - GCP zone
+ */
+const pollRestoredInstanceStatus = async (instanceId, gcpInstanceName, zone) => {
+  const maxAttempts = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+  const pollInterval = 5000; // 5 seconds
+  
+  console.log(`Starting background polling for restored instance ${instanceId}`);
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      // Wait before polling
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      
+      console.log(`Polling attempt ${attempt}/${maxAttempts} for instance ${gcpInstanceName}`);
+      
+      // Get instance details from GCP
+      const instanceDetails = await gcpService.describeInstance(gcpInstanceName, zone);
+      
+      if (!instanceDetails) {
+        console.log(`Instance ${gcpInstanceName} not found yet, will retry...`);
+        continue;
+      }
+      
+      // Check if instance is running and has an external IP
+      const status = instanceDetails.status;
+      const externalIp = instanceDetails.networkInterfaces?.[0]?.accessConfigs?.[0]?.natIP;
+      
+      console.log(`Instance ${gcpInstanceName} status: ${status}, IP: ${externalIp || 'none'}`);
+      
+      if (status === 'RUNNING' && externalIp) {
+        // Update database with RUNNING status and IP
+        await dbService.updateInstanceGcpMetadata(instanceId, {
+          gcpExternalIp: externalIp
+        });
+        
+        await dbService.updateInstanceStatus(instanceId, 'RUNNING');
+        
+        console.log(`✓ Restored instance ${instanceId} is now RUNNING with IP ${externalIp}`);
+        return;
+      }
+      
+      // If instance is in error state, update database
+      if (status === 'TERMINATED' || status === 'STOPPING' || status === 'STOPPED') {
+        await dbService.updateInstanceStatus(
+          instanceId,
+          'ERROR',
+          `Instance entered unexpected state: ${status}`
+        );
+        console.error(`✗ Restored instance ${instanceId} entered error state: ${status}`);
+        return;
+      }
+      
+    } catch (error) {
+      console.error(`Error polling restored instance ${instanceId} (attempt ${attempt}):`, error);
+      
+      // On last attempt, mark as error
+      if (attempt === maxAttempts) {
+        try {
+          await dbService.updateInstanceStatus(
+            instanceId,
+            'ERROR',
+            'Failed to verify instance status after restore'
+          );
+        } catch (dbError) {
+          console.error(`Failed to update instance status to ERROR:`, dbError);
+        }
+      }
+    }
+  }
+  
+  console.error(`✗ Polling timeout for restored instance ${instanceId} after ${maxAttempts} attempts`);
+};
+
 module.exports = {
   getBackups,
   createBackup,
   getBackup,
-  deleteBackup
+  deleteBackup,
+  restoreBackup
 };

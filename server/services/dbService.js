@@ -342,6 +342,73 @@ const updateInstanceStatus = async (id, status, errorMessage = null) => {
 };
 
 /**
+ * Update instance GCP metadata (e.g., external IP)
+ * @param {string} id - Instance ID
+ * @param {object} gcpMetadata - GCP metadata to update
+ * @param {string} gcpMetadata.gcpExternalIp - External IP address
+ * @returns {Promise<object>} - Updated instance object
+ */
+const updateInstanceGcpMetadata = async (id, gcpMetadata) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (gcpMetadata.gcpExternalIp !== undefined) {
+      updates.push(`gcp_external_ip = $${paramIndex++}`);
+      values.push(gcpMetadata.gcpExternalIp);
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No GCP metadata fields to update');
+    }
+
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id); // Add id as the last parameter
+
+    const query = `
+      UPDATE instances 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING 
+        id,
+        user_email,
+        name,
+        image_id,
+        status,
+        cpu_cores,
+        ram_gb,
+        storage_gb,
+        gpu,
+        region,
+        created_at,
+        updated_at,
+        gcp_instance_id,
+        gcp_zone,
+        gcp_machine_type,
+        gcp_project_id,
+        gcp_external_ip,
+        error_message
+    `;
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Instance with id ${id} not found`);
+    }
+    
+    return transformInstanceRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating instance GCP metadata:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
  * Delete instance (soft delete by setting status to DELETED)
  * @param {string} id - Instance ID
  * @returns {Promise<object>} - Updated instance object with DELETED status
@@ -1908,6 +1975,7 @@ module.exports = {
   getInstancesByUser,
   createInstance,
   updateInstanceStatus,
+  updateInstanceGcpMetadata,
   deleteInstance,
   getInstanceById,
   calculateUsageSummary,

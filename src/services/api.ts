@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
-import type { Instance, InstanceStatus, UsageSummary, UsageRow, WindowsPasswordResetResponse, Backup, CreateBackupRequest } from '../data/types';
+import type { Instance, InstanceStatus, UsageSummary, UsageRow, WindowsPasswordResetResponse, Backup, CreateBackupRequest, RestoreBackupRequest } from '../data/types';
 import type { UserPreferences, ProfileUpdateData } from '../types/preferences';
 
 // Callback function for handling logout on 401 errors
@@ -359,6 +359,17 @@ export const apiService = {
   deleteBackup: async (id: string): Promise<{ success: boolean; message: string }> => {
     const response = await apiClient.delete(`/api/backups/${id}`);
     return response.data;
+  },
+
+  /**
+   * Restore a backup to create a new instance
+   * @param id - Backup ID
+   * @param restoreData - Restore configuration data (instanceName, zone)
+   * @returns Promise with created instance
+   */
+  restoreBackup: async (id: string, restoreData: RestoreBackupRequest): Promise<Instance> => {
+    const response = await apiClient.post(`/api/backups/${id}/restore`, restoreData);
+    return response.data.instance;
   },
 };
 
