@@ -92,6 +92,9 @@ export interface UsageSummary {
   totalStorageCost: number;
   averageCostPerDesktop: number;
   activeDesktops: number;
+  backupStorageCost?: number;
+  backupStorageGb?: number;
+  backupCount?: number;
 }
 
 export interface DailyUsage {
@@ -219,4 +222,41 @@ export function getGpusByCategory(category: GpuCategory): GpuType[] {
   return Object.entries(GPU_SPECS)
     .filter(([_, spec]) => spec.category === category)
     .map(([type]) => type as GpuType);
+}
+
+// Backup-related types
+export type BackupStatus = 'CREATING' | 'COMPLETED' | 'ERROR' | 'DELETED';
+
+export interface Backup {
+  id: string;
+  userEmail: string;
+  instanceId: string;
+  name: string;
+  gcpMachineImageName: string;
+  sourceInstanceName: string;
+  sourceInstanceZone: string;
+  storageBytes: number;
+  storageGb: number; // Calculated field
+  status: BackupStatus;
+  errorMessage?: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  currentCost: number; // Calculated field
+}
+
+export interface CreateBackupRequest {
+  instanceId: string;
+  name: string;
+}
+
+export interface BackupCostSummary {
+  totalBackupStorageCost: number;
+  totalBackupStorageGb: number;
+  backupCount: number;
+  costByBackup: Array<{
+    backupId: string;
+    backupName: string;
+    storageGb: number;
+    cost: number;
+  }>;
 }

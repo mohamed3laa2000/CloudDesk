@@ -29,6 +29,8 @@ import InstanceDetail from './routes/InstanceDetail';
 import Usage from './routes/Usage';
 import Classroom from './routes/Classroom';
 import Settings from './routes/Settings';
+import Backup from './routes/Backup';
+import BackupDetail from './routes/BackupDetail';
 
 function App() {
   return (
@@ -62,6 +64,8 @@ function App() {
           <Route path="/demo/create" element={<CreateInstance />} />
           <Route path="/demo/usage" element={<Usage />} />
           <Route path="/demo/classroom" element={<Classroom />} />
+          <Route path="/demo/backups" element={<Backup />} />
+          <Route path="/demo/backups/:id" element={<BackupDetail />} />
         </Route>
         
         {/* Protected application routes with sidebar */}
@@ -71,6 +75,8 @@ function App() {
           <Route path="/instances/:id" element={<InstanceDetail />} />
           <Route path="/usage" element={<Usage />} />
           <Route path="/classroom" element={<Classroom />} />
+          <Route path="/backups" element={<Backup />} />
+          <Route path="/backups/:id" element={<BackupDetail />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         

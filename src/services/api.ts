@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
-import type { Instance, InstanceStatus, UsageSummary, UsageRow, WindowsPasswordResetResponse } from '../data/types';
+import type { Instance, InstanceStatus, UsageSummary, UsageRow, WindowsPasswordResetResponse, Backup, CreateBackupRequest } from '../data/types';
 import type { UserPreferences, ProfileUpdateData } from '../types/preferences';
 
 // Callback function for handling logout on 401 errors
@@ -318,6 +318,47 @@ export const apiService = {
   updateUserProfile: async (data: ProfileUpdateData): Promise<{ email: string; name: string }> => {
     const response = await apiClient.put('/api/users/profile', data);
     return response.data.user;
+  },
+
+  // Backup API methods
+
+  /**
+   * Get all backups for the authenticated user
+   * @returns Promise with array of backups
+   */
+  getBackups: async (): Promise<Backup[]> => {
+    const response = await apiClient.get('/api/backups');
+    return response.data.backups;
+  },
+
+  /**
+   * Create a new backup
+   * @param backupData - Backup configuration data
+   * @returns Promise with created backup
+   */
+  createBackup: async (backupData: CreateBackupRequest): Promise<Backup> => {
+    const response = await apiClient.post('/api/backups', backupData);
+    return response.data.backup;
+  },
+
+  /**
+   * Get a single backup by ID
+   * @param id - Backup ID
+   * @returns Promise with backup details
+   */
+  getBackup: async (id: string): Promise<Backup> => {
+    const response = await apiClient.get(`/api/backups/${id}`);
+    return response.data.backup;
+  },
+
+  /**
+   * Delete a backup
+   * @param id - Backup ID
+   * @returns Promise with success message
+   */
+  deleteBackup: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.delete(`/api/backups/${id}`);
+    return response.data;
   },
 };
 

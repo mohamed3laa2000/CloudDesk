@@ -476,16 +476,21 @@ const calculateUsageSummary = async (email) => {
     const result = await pool.query(query, [email]);
     const allInstances = result.rows.map(transformInstanceRow);
 
-    // If no instances, return zero summary
+    // If no instances, still check for backup costs
     if (allInstances.length === 0) {
+      const backupCosts = await calculateBackupCosts(email);
+      
       return {
         totalHours: 0,
-        totalCost: 0,
+        totalCost: backupCosts.totalBackupStorageCost,
         totalComputeCost: 0,
-        totalStorageCost: 0,
+        totalStorageCost: backupCosts.totalBackupStorageCost,
         averageCostPerDesktop: 0,
         activeDesktops: 0,
-        usageByInstance: []
+        usageByInstance: [],
+        backupStorageCost: backupCosts.totalBackupStorageCost,
+        backupStorageGb: backupCosts.totalBackupStorageGb,
+        backupCount: backupCosts.backupCount
       };
     }
 
@@ -592,6 +597,13 @@ const calculateUsageSummary = async (email) => {
       ? Math.round((totalCost / allInstances.length) * 100) / 100 
       : 0;
 
+    // Calculate backup storage costs
+    const backupCosts = await calculateBackupCosts(email);
+    
+    // Add backup storage costs to total cost
+    totalCost += backupCosts.totalBackupStorageCost;
+    totalStorageCost += backupCosts.totalBackupStorageCost;
+
     // Round totals
     totalHours = Math.round(totalHours * 100) / 100;
     totalCost = Math.round(totalCost * 100) / 100;
@@ -605,7 +617,11 @@ const calculateUsageSummary = async (email) => {
       totalStorageCost,
       averageCostPerDesktop,
       activeDesktops,
-      usageByInstance
+      usageByInstance,
+      // Add backup costs as separate line item in breakdown
+      backupStorageCost: backupCosts.totalBackupStorageCost,
+      backupStorageGb: backupCosts.totalBackupStorageGb,
+      backupCount: backupCosts.backupCount
     };
   } catch (error) {
     console.error('Error calculating usage summary:', error.message);
@@ -775,6 +791,36 @@ const transformPasskeyRow = (row) => {
     authenticatorType: row.authenticator_type,
     friendlyName: row.friendly_name,
     lastUsedAt: row.last_used_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+};
+
+/**
+ * Transform database row from snake_case to camelCase for backup data
+ * @param {object} row - Database row with snake_case fields
+ * @returns {object} - Transformed object with camelCase fields
+ */
+const transformBackupRow = (row) => {
+  if (!row) return null;
+  
+  // Calculate storageGb from storageBytes (handle null values)
+  const storageGb = row.storage_bytes !== null && row.storage_bytes !== undefined
+    ? Math.round((row.storage_bytes / (1024 ** 3)) * 100) / 100  // Convert bytes to GB, round to 2 decimals
+    : null;
+  
+  return {
+    id: row.id,
+    userEmail: row.user_email,
+    instanceId: row.instance_id,
+    name: row.name,
+    gcpMachineImageName: row.gcp_machine_image_name,
+    sourceInstanceName: row.source_instance_name,
+    sourceInstanceZone: row.source_instance_zone,
+    storageBytes: row.storage_bytes,
+    storageGb: storageGb,
+    status: row.status,
+    errorMessage: row.error_message || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1431,6 +1477,415 @@ const cleanupExpiredChallenges = async () => {
 };
 
 /**
+ * Create a new backup record
+ * @param {string} userEmail - User email
+ * @param {string} instanceId - Source instance ID
+ * @param {object} backupData - Backup configuration
+ * @param {string} backupData.name - User-defined backup name
+ * @param {string} backupData.gcpMachineImageName - GCP machine image name
+ * @param {string} backupData.sourceInstanceName - Source instance name
+ * @param {string} backupData.sourceInstanceZone - Source instance zone
+ * @returns {Promise<object>} - Created backup object
+ */
+const createBackup = async (userEmail, instanceId, backupData) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Generate unique backup ID (format: bak-{timestamp}-{random})
+    const backupId = `bak-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    const query = `
+      INSERT INTO backups (
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+    `;
+
+    const values = [
+      backupId,
+      userEmail,
+      instanceId,
+      backupData.name,
+      backupData.gcpMachineImageName,
+      backupData.sourceInstanceName,
+      backupData.sourceInstanceZone,
+      null, // storage_bytes - will be updated after backup completes
+      'CREATING' // Initial status
+    ];
+
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Failed to create backup');
+    }
+    
+    return transformBackupRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating backup:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get all backups for a user
+ * @param {string} userEmail - User email
+ * @returns {Promise<Array>} - Array of backup objects
+ */
+const getBackupsByUser = async (userEmail) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+      FROM backups 
+      WHERE user_email = $1 AND status != 'DELETED'
+      ORDER BY created_at DESC
+    `;
+    
+    const result = await pool.query(query, [userEmail]);
+    
+    return result.rows.map(transformBackupRow);
+  } catch (error) {
+    console.error('Error getting backups by user:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Get backup by ID
+ * @param {string} id - Backup ID
+ * @returns {Promise<object|null>} - Backup object or null if not found
+ */
+const getBackupById = async (id) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+      FROM backups 
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+    
+    // Return null if backup not found, otherwise return the transformed backup object
+    return result.rows.length > 0 ? transformBackupRow(result.rows[0]) : null;
+  } catch (error) {
+    console.error('Error getting backup by ID:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Validate backup status transition
+ * Valid transitions: CREATING → COMPLETED, CREATING → ERROR, COMPLETED → DELETED, ERROR → DELETED
+ * @param {string} currentStatus - Current backup status
+ * @param {string} newStatus - New backup status
+ * @returns {boolean} - True if transition is valid
+ */
+const isValidStatusTransition = (currentStatus, newStatus) => {
+  const validTransitions = {
+    'CREATING': ['COMPLETED', 'ERROR'],
+    'COMPLETED': ['DELETED'],
+    'ERROR': ['DELETED'],
+    'DELETED': [] // No transitions from DELETED
+  };
+
+  return validTransitions[currentStatus]?.includes(newStatus) || false;
+};
+
+/**
+ * Update backup status and metadata
+ * @param {string} id - Backup ID
+ * @param {string} status - New status
+ * @param {number|null} storageBytes - Storage size in bytes (optional)
+ * @param {string|null} errorMessage - Error message (optional)
+ * @returns {Promise<object>} - Updated backup object
+ */
+const updateBackupStatus = async (id, status, storageBytes = null, errorMessage = null) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Validate status
+    const validStatuses = ['CREATING', 'COMPLETED', 'ERROR', 'DELETED'];
+    if (!validStatuses.includes(status)) {
+      throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    // Get current backup to validate status transition
+    const currentBackup = await getBackupById(id);
+    if (!currentBackup) {
+      throw new Error(`Backup with id ${id} not found`);
+    }
+
+    // Validate status transition
+    if (!isValidStatusTransition(currentBackup.status, status)) {
+      throw new Error(`Invalid status transition from ${currentBackup.status} to ${status}`);
+    }
+
+    const query = `
+      UPDATE backups 
+      SET 
+        status = $1,
+        storage_bytes = COALESCE($2, storage_bytes),
+        error_message = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+      RETURNING 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [status, storageBytes, errorMessage, id]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Failed to update backup with id ${id}`);
+    }
+    
+    return transformBackupRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating backup status:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Delete backup (soft delete by setting status to DELETED)
+ * @param {string} id - Backup ID
+ * @returns {Promise<object>} - Updated backup object with DELETED status
+ */
+const deleteBackup = async (id) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Get current backup to validate status transition
+    const currentBackup = await getBackupById(id);
+    if (!currentBackup) {
+      throw new Error(`Backup with id ${id} not found`);
+    }
+
+    // Validate status transition to DELETED
+    if (!isValidStatusTransition(currentBackup.status, 'DELETED')) {
+      throw new Error(`Invalid status transition from ${currentBackup.status} to DELETED`);
+    }
+
+    const query = `
+      UPDATE backups 
+      SET 
+        status = 'DELETED',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+    `;
+
+    const result = await pool.query(query, [id]);
+    
+    if (result.rows.length === 0) {
+      throw new Error(`Failed to delete backup with id ${id}`);
+    }
+    
+    return transformBackupRow(result.rows[0]);
+  } catch (error) {
+    console.error('Error deleting backup:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
+ * Calculate backup storage costs for usage summary
+ * @param {string} userEmail - User email
+ * @returns {Promise<object>} - Backup cost summary with totalBackupStorageCost, totalBackupStorageGb, backupCount, costByBackup
+ */
+const calculateBackupCosts = async (userEmail) => {
+  try {
+    if (!pool) {
+      throw new Error('Database connection not established. Call connect() first.');
+    }
+
+    // Query ALL user backups including DELETED ones for historical costs
+    const query = `
+      SELECT 
+        id,
+        user_email,
+        instance_id,
+        name,
+        gcp_machine_image_name,
+        source_instance_name,
+        source_instance_zone,
+        storage_bytes,
+        status,
+        error_message,
+        created_at,
+        updated_at
+      FROM backups 
+      WHERE user_email = $1
+      ORDER BY created_at DESC
+    `;
+    
+    const result = await pool.query(query, [userEmail]);
+    const allBackups = result.rows.map(transformBackupRow);
+
+    // If no backups, return zero summary
+    if (allBackups.length === 0) {
+      return {
+        totalBackupStorageCost: 0,
+        totalBackupStorageGb: 0,
+        backupCount: 0,
+        costByBackup: []
+      };
+    }
+
+    // Pricing configuration - storage cost per GiB-hour in IDR
+    // Based on pricing: Rp 1,200 per GiB per month
+    // Monthly rate / 730 hours = 1200 / 730 ≈ 1.64 IDR per GiB-hour
+    const STORAGE_RATE_PER_GB_HOUR = 1.64; // IDR per GiB per hour
+
+    /**
+     * Calculate hours elapsed since backup creation
+     * For DELETED backups: from created_at to updated_at (deletion time)
+     * For active backups: from created_at to now
+     */
+    const calculateHoursElapsed = (backup) => {
+      const created = new Date(backup.createdAt);
+      const endTime = backup.status === 'DELETED' 
+        ? new Date(backup.updatedAt)  // Use deletion time for deleted backups
+        : new Date();  // Use current time for active backups
+      
+      const diffMs = endTime - created;
+      const diffHours = diffMs / (1000 * 60 * 60);
+      return Math.max(0, diffHours); // Ensure non-negative
+    };
+
+    /**
+     * Calculate cost for a single backup
+     * Formula: storageGb × hours × rate
+     */
+    const calculateBackupCost = (backup) => {
+      // If storage size is not yet available (backup still creating), cost is 0
+      if (backup.storageGb === null || backup.storageGb === undefined) {
+        return 0;
+      }
+
+      const hours = calculateHoursElapsed(backup);
+      const cost = backup.storageGb * hours * STORAGE_RATE_PER_GB_HOUR;
+      return Math.round(cost * 100) / 100; // Round to 2 decimal places
+    };
+
+    // Calculate costs for each backup
+    let totalBackupStorageCost = 0;
+    let totalBackupStorageGb = 0;
+    const costByBackup = [];
+
+    for (const backup of allBackups) {
+      const cost = calculateBackupCost(backup);
+      const storageGb = backup.storageGb || 0;
+
+      totalBackupStorageCost += cost;
+      totalBackupStorageGb += storageGb;
+
+      costByBackup.push({
+        backupId: backup.id,
+        backupName: backup.name,
+        storageGb: storageGb,
+        cost: cost
+      });
+    }
+
+    // Round totals
+    totalBackupStorageCost = Math.round(totalBackupStorageCost * 100) / 100;
+    totalBackupStorageGb = Math.round(totalBackupStorageGb * 100) / 100;
+
+    return {
+      totalBackupStorageCost,
+      totalBackupStorageGb,
+      backupCount: allBackups.length,
+      costByBackup
+    };
+  } catch (error) {
+    console.error('Error calculating backup costs:', error.message);
+    throw new Error(`Database query failed: ${error.message}`);
+  }
+};
+
+/**
  * Disconnect from the database and close the connection pool
  */
 const disconnect = async () => {
@@ -1474,9 +1929,18 @@ module.exports = {
   getChallenge,
   deleteChallenge,
   cleanupExpiredChallenges,
+  // Backup methods
+  createBackup,
+  getBackupsByUser,
+  getBackupById,
+  updateBackupStatus,
+  deleteBackup,
+  calculateBackupCosts,
   disconnect,
   // Test exports
   __testExports: {
-    validateFriendlyName
+    validateFriendlyName,
+    transformBackupRow,
+    isValidStatusTransition
   }
 };

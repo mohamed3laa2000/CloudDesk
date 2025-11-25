@@ -8,3 +8,4 @@ export * from './images';
 export * from './instances';
 export * from './pricing';
 export * from './usage';
+export * from './backups';

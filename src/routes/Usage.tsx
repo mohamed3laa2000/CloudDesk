@@ -353,6 +353,18 @@ export default function Usage() {
                   Rp {summary.totalCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </td>
               </tr>
+              {summary.backupCount !== undefined && summary.backupCount > 0 && (
+                <tr className="border-t border-gray-200 dark:border-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300" colSpan={3}>
+                    Backup Storage ({summary.backupCount} backup{summary.backupCount !== 1 ? 's' : ''}, {summary.backupStorageGb?.toFixed(2)} GB)
+                  </td>
+                  <td className="px-6 py-4"></td>
+                  <td className="px-6 py-4 text-right text-sm text-gray-600 dark:text-gray-300">
+                    Rp {(summary.backupStorageCost || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="px-6 py-4"></td>
+                </tr>
+              )}
             </tfoot>
           </table>
         </div>
@@ -421,6 +433,16 @@ export default function Usage() {
                 <span className="text-gray-700 dark:text-gray-200 font-medium">Total Storage Cost:</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-50">Rp {summary.totalStorageCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
               </div>
+              {summary.backupCount !== undefined && summary.backupCount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">
+                    Backup Storage ({summary.backupCount} backup{summary.backupCount !== 1 ? 's' : ''}, {summary.backupStorageGb?.toFixed(2)} GB):
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-50">
+                    Rp {(summary.backupStorageCost || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-indigo-300 dark:border-indigo-600">
                 <span className="text-gray-900 dark:text-gray-50 font-semibold">Total Cost:</span>
                 <span className="font-bold text-gray-900 dark:text-gray-50 text-base">Rp {summary.totalCost.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>

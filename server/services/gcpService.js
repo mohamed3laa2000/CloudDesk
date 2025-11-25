@@ -1052,6 +1052,310 @@ const resetWindowsPassword = async (instanceName, zone, username) => {
 };
 
 /**
+ * Create a machine image backup of an instance
+ * @param {string} imageName - Name for the machine image
+ * @param {string} instanceName - Source instance name
+ * @param {string} zone - GCP zone of the instance
+ * @returns {Promise<Object>} Machine image metadata
+ * @throws {Error} If machine image creation fails
+ */
+const createMachineImage = async (imageName, instanceName, zone) => {
+  const startTime = Date.now();
+  
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'createMachineImage',
+    'Creating machine image backup',
+    {
+      imageName,
+      instanceName,
+      zone
+    }
+  );
+
+  try {
+    const args = [
+      'compute',
+      'machine-images',
+      'create',
+      imageName,
+      `--source-instance=${instanceName}`,
+      `--source-instance-zone=${zone}`
+    ];
+
+    const result = await _executeGcloudCommand(args, { timeout: GCP_TIMEOUT_MS });
+
+    // Parse machine image metadata from result
+    const imageData = Array.isArray(result) ? result[0] : result;
+
+    if (!imageData) {
+      throw new Error('No machine image data returned from gcloud command');
+    }
+
+    // Extract metadata
+    const metadata = {
+      name: imageData.name,
+      sourceInstance: imageData.sourceInstance,
+      status: imageData.status,
+      creationTimestamp: imageData.creationTimestamp
+    };
+
+    // Log successful operation with context
+    const duration = Date.now() - startTime;
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'createMachineImage',
+      'Machine image created successfully',
+      {
+        imageName: metadata.name,
+        sourceInstance: instanceName,
+        zone,
+        status: metadata.status,
+        duration
+      }
+    );
+    
+    return metadata;
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to create machine image',
+      {
+        operation: 'createMachineImage',
+        imageName,
+        instanceName,
+        zone,
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
+ * Get machine image details including storage size
+ * @param {string} imageName - Machine image name
+ * @returns {Promise<Object>} Machine image details with totalStorageBytes
+ * @throws {Error} If describe operation fails
+ */
+const describeMachineImage = async (imageName) => {
+  const startTime = Date.now();
+  
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'describeMachineImage',
+    'Describing machine image',
+    {
+      imageName
+    }
+  );
+
+  try {
+    const args = [
+      'compute',
+      'machine-images',
+      'describe',
+      imageName
+    ];
+
+    const result = await _executeGcloudCommand(args, { timeout: 30000 }); // 30 second timeout
+
+    // Validate response structure
+    if (!result || typeof result !== 'object') {
+      throw new Error('Invalid response from gcloud command: expected object');
+    }
+
+    // Extract totalStorageBytes from response
+    // The field may be missing if the machine image is still being created
+    const totalStorageBytes = result.totalStorageBytes || null;
+
+    // Parse to number if it's a string
+    const storageBytesNumber = totalStorageBytes ? parseInt(totalStorageBytes, 10) : null;
+
+    // Validate storage bytes is a valid number
+    if (totalStorageBytes !== null && (isNaN(storageBytesNumber) || storageBytesNumber < 0)) {
+      _logGcpOperation(
+        LOG_LEVELS.WARN,
+        'describeMachineImage',
+        'Invalid totalStorageBytes value in response',
+        {
+          imageName,
+          totalStorageBytes,
+          parsedValue: storageBytesNumber
+        }
+      );
+    }
+
+    // Build metadata object
+    const metadata = {
+      name: result.name,
+      totalStorageBytes: storageBytesNumber,
+      status: result.status,
+      creationTimestamp: result.creationTimestamp,
+      sourceInstance: result.sourceInstance
+    };
+
+    // Log successful operation with context
+    const duration = Date.now() - startTime;
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'describeMachineImage',
+      'Machine image described successfully',
+      {
+        imageName: metadata.name,
+        totalStorageBytes: metadata.totalStorageBytes,
+        status: metadata.status,
+        duration
+      }
+    );
+    
+    return metadata;
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to describe machine image',
+      {
+        operation: 'describeMachineImage',
+        imageName,
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
+ * Delete a machine image
+ * @param {string} imageName - Machine image name
+ * @returns {Promise<void>}
+ * @throws {Error} If delete operation fails
+ */
+const deleteMachineImage = async (imageName) => {
+  const startTime = Date.now();
+  
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'deleteMachineImage',
+    'Deleting machine image',
+    {
+      imageName
+    }
+  );
+
+  try {
+    const args = [
+      'compute',
+      'machine-images',
+      'delete',
+      imageName,
+      '--quiet' // Skip confirmation prompt
+    ];
+
+    await _executeGcloudCommand(args, { timeout: 120000 }); // 2 minute timeout
+    
+    // Log successful operation with context
+    const duration = Date.now() - startTime;
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'deleteMachineImage',
+      'Machine image deleted successfully',
+      {
+        imageName,
+        duration
+      }
+    );
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to delete machine image',
+      {
+        operation: 'deleteMachineImage',
+        imageName,
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
+ * List all machine images in the project
+ * @returns {Promise<Array>} Array of machine image objects
+ * @throws {Error} If list operation fails
+ */
+const listMachineImages = async () => {
+  const startTime = Date.now();
+  
+  _logGcpOperation(
+    LOG_LEVELS.INFO,
+    'listMachineImages',
+    'Listing machine images',
+    {}
+  );
+
+  try {
+    const args = [
+      'compute',
+      'machine-images',
+      'list'
+    ];
+
+    const result = await _executeGcloudCommand(args, { timeout: 30000 }); // 30 second timeout
+
+    // Result should be an array of machine image objects
+    const images = Array.isArray(result) ? result : [];
+
+    // Log successful operation with context
+    const duration = Date.now() - startTime;
+    
+    _logGcpOperation(
+      LOG_LEVELS.INFO,
+      'listMachineImages',
+      'Machine images listed successfully',
+      {
+        imageCount: images.length,
+        duration
+      }
+    );
+    
+    return images;
+
+  } catch (error) {
+    // If error is already structured, rethrow it
+    if (error.success === false && error.error) {
+      throw error;
+    }
+    
+    throw _createErrorResponse(
+      ERROR_CODES.COMMAND_ERROR,
+      error.message || 'Failed to list machine images',
+      {
+        operation: 'listMachineImages',
+        error: error.message
+      }
+    );
+  }
+};
+
+/**
  * Check if GCP is enabled and configured
  * @returns {boolean} True if GCP is enabled and configured
  */
@@ -1144,6 +1448,10 @@ module.exports = {
   deleteInstance,
   getInstanceStatus,
   resetWindowsPassword,
+  createMachineImage,
+  describeMachineImage,
+  deleteMachineImage,
+  listMachineImages,
   isGcpEnabled,
   validateConfiguration,
   _executeGcloudCommand, // Exported for testing
